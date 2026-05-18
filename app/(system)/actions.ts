@@ -37,7 +37,9 @@ export async function createAdmission(formData: FormData) {
     });
     revalidatePath("/ppdb");
     revalidatePath("/dashboard");
-  } catch {}
+  } catch (error) {
+    console.error("createAdmission failed", error);
+  }
 }
 
 export async function recordAttendance(formData: FormData) {
@@ -61,7 +63,9 @@ export async function recordAttendance(formData: FormData) {
     });
     revalidatePath("/presensi");
     revalidatePath("/dashboard");
-  } catch {}
+  } catch (error) {
+    console.error("recordAttendance failed", error);
+  }
 }
 
 export async function recordPayment(formData: FormData) {
@@ -107,5 +111,7 @@ export async function recordPayment(formData: FormData) {
 
     revalidatePath("/keuangan");
     revalidatePath("/dashboard");
-  } catch {}
+  } catch (error) {
+    console.error("recordPayment failed", error);
+  }
 }
