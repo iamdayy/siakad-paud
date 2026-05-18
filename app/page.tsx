@@ -1,4 +1,5 @@
 import { ArrowRight, CheckCircle2, Database, LayoutDashboard, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
   const foundations = [
@@ -62,13 +63,18 @@ export default function Home() {
         <section className="grid gap-4 rounded-[2rem] border bg-card p-8 shadow-sm lg:grid-cols-[1.3fr_0.7fr]">
           <div className="space-y-4">
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Langkah berikutnya</p>
-            <h2 className="text-2xl font-semibold tracking-tight">
-              Lanjutkan dengan task domain: schema Prisma, dashboard admin, atau form PPDB.
-            </h2>
+            <h2 className="text-2xl font-semibold tracking-tight">Sistem MVP sudah aktif dan siap dipakai.</h2>
             <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-              Struktur dasar proyek, helper Prisma, utilitas className, dan variabel tema sudah
-              tersedia untuk mempercepat pengerjaan fitur berikutnya.
+              Masuk ke panel modul untuk mengelola PPDB, data siswa, presensi, keuangan, dan laporan.
             </p>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/dashboard" className="rounded-full bg-primary px-4 py-2 text-sm text-primary-foreground">
+                Buka Dashboard
+              </Link>
+              <Link href="/ppdb" className="rounded-full border bg-background px-4 py-2 text-sm">
+                Form PPDB
+              </Link>
+            </div>
           </div>
           <div className="rounded-[1.5rem] bg-secondary p-5 text-secondary-foreground">
             <p className="text-sm font-medium">Bootstrap saat ini mencakup:</p>

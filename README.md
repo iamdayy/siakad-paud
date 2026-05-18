@@ -17,6 +17,15 @@ Salin `.env.example` menjadi `.env` lalu sesuaikan:
 cp .env.example .env
 ```
 
+## Modul sistem (MVP)
+
+- `/dashboard` - ringkasan lintas modul
+- `/ppdb` - form pendaftaran calon siswa
+- `/siswa` - daftar siswa
+- `/presensi` - input dan log presensi
+- `/keuangan` - input pembayaran dan ringkasan invoice
+- `/laporan` - laporan harian dan rekap penilaian
+
 ## Script utama
 
 - `npm run dev` - menjalankan aplikasi lokal
