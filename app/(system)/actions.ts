@@ -96,7 +96,7 @@ export async function recordPayment(formData: FormData) {
         return;
       }
 
-      const paidTotal = invoice.payments.reduce((sum, payment) => sum + payment.amount, 0) + amount;
+      const paidTotal = invoice.payments.reduce((sum, payment) => sum + payment.amount, 0);
       const nextStatus = paidTotal >= invoice.amount ? InvoiceStatus.PAID : InvoiceStatus.PARTIAL;
 
       await tx.invoice.update({
@@ -109,4 +109,3 @@ export async function recordPayment(formData: FormData) {
     revalidatePath("/dashboard");
   } catch {}
 }
-
