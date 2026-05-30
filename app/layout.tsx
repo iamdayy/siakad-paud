@@ -1,12 +1,36 @@
 import type { Metadata } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
-    default: "SIAKAD PAUD",
-    template: "%s | SIAKAD PAUD",
+    default: "PAUD Ceria Bintang — Tempat Terbaik Tumbuh, Bermain & Belajar",
+    template: "%s | PAUD Ceria Bintang",
   },
-  description: "Sistem Informasi Akademik untuk PAUD dan TK berbasis Next.js.",
+  description:
+    "PAUD Ceria Bintang menyediakan pendidikan anak usia dini berkualitas dengan kurikulum merdeka belajar, guru bersertifikasi, dan fasilitas ramah anak. Daycare, KB, TK A & TK B.",
+  keywords: [
+    "PAUD",
+    "TK",
+    "pendidikan anak usia dini",
+    "preschool",
+    "kindergarten",
+    "PPDB",
+    "sekolah anak",
+  ],
+  openGraph: {
+    title: "PAUD Ceria Bintang — Tempat Terbaik Tumbuh, Bermain & Belajar",
+    description:
+      "Pendidikan anak usia dini berkualitas dengan kurikulum merdeka belajar, guru bersertifikasi, dan fasilitas ramah anak.",
+    type: "website",
+    locale: "id_ID",
+  },
 };
 
 export default function RootLayout({
@@ -15,8 +39,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className="h-full antialiased">
-      <body className="flex min-h-full flex-col bg-background text-foreground">
+    <html lang="id" className={`h-full antialiased ${jakarta.variable}`}>
+      <body className="flex min-h-full flex-col bg-background text-foreground font-sans">
         {children}
       </body>
     </html>

@@ -1,5 +1,5 @@
-import { AttendanceStatus, InvoiceStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { AttendanceStatus, InvoiceStatus } from "@prisma/client";
 
 function mapAttendanceLabel(status: AttendanceStatus) {
   const labels: Record<AttendanceStatus, string> = {
@@ -22,11 +22,20 @@ function mapInvoiceLabel(status: InvoiceStatus) {
 
 export async function getDashboardStats() {
   try {
-    const [students, admissions, invoices, unpaidInvoices, attendanceToday, reports] = await Promise.all([
+    const [
+      students,
+      admissions,
+      invoices,
+      unpaidInvoices,
+      attendanceToday,
+      reports,
+    ] = await Promise.all([
       prisma.student.count(),
       prisma.admission.count({ where: { status: "PENDING" } }),
       prisma.invoice.count(),
-      prisma.invoice.count({ where: { status: { in: ["UNPAID", "PARTIAL"] } } }),
+      prisma.invoice.count({
+        where: { status: { in: ["UNPAID", "PARTIAL"] } },
+      }),
       prisma.attendance.count({
         where: {
           date: {
@@ -38,7 +47,15 @@ export async function getDashboardStats() {
       prisma.dailyReport.count(),
     ]);
 
-    return { students, admissions, invoices, unpaidInvoices, attendanceToday, reports, dbReady: true };
+    return {
+      students,
+      admissions,
+      invoices,
+      unpaidInvoices,
+      attendanceToday,
+      reports,
+      dbReady: true,
+    };
   } catch {
     return {
       students: 0,
@@ -118,13 +135,17 @@ export async function getFinanceSnapshot() {
       dbReady: true,
       revenue: payments._sum.amount ?? 0,
       rows: invoices.map((item) => {
-        const paid = item.payments.reduce((sum, payment) => sum + payment.amount, 0);
+        const paid = item.payments.reduce(
+          (sum, payment) => sum + payment.amount,
+          0,
+        );
         return {
           id: item.id,
           code: item.code,
           student: item.student.fullName,
           period: `${item.periodMonth}/${item.periodYear}`,
           amount: item.amount,
+          dueDate: item.dueDate,
           paid,
           remaining: Math.max(item.amount - paid, 0),
           status: mapInvoiceLabel(item.status),
@@ -163,7 +184,12 @@ export async function getReportsSnapshot() {
         id: item.id,
         studentName: item.student.fullName,
         period: item.periodLabel,
-        avg: Number(((item.social + item.cognitive + item.motoric + item.language) / 4).toFixed(1)),
+        avg: Number(
+          (
+            (item.social + item.cognitive + item.motoric + item.language) /
+            4
+          ).toFixed(1),
+        ),
       })),
     };
   } catch {
@@ -171,3 +197,33 @@ export async function getReportsSnapshot() {
   }
 }
 
+export async function getTeachers() {
+  try {
+    const rows = await prisma.teacher.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+    return { dbReady: true, rows };
+  } catch {
+    return { dbReady: false, rows: [] };
+  }
+}
+
+export async function getGuardians() {
+  try {
+    const students = await prisma.student.findMany({
+      select: { guardianName: true, guardianPhone: true },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+    const map = new Map();
+    students.forEach((s) => {
+      const key = `${s.guardianName}||${s.guardianPhone}`;
+      if (!map.has(key))
+        map.set(key, { name: s.guardianName, phone: s.guardianPhone });
+    });
+    return { dbReady: true, rows: Array.from(map.values()) };
+  } catch {
+    return { dbReady: false, rows: [] };
+  }
+}

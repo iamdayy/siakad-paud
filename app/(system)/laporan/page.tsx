@@ -1,8 +1,16 @@
+import { requirePageAccess } from "@/lib/auth";
 import { getReportsSnapshot } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function LaporanPage() {
+  await requirePageAccess("/laporan", [
+    "ADMIN",
+    "TU",
+    "GURU",
+    "KEPALA_SEKOLAH",
+  ]);
+
   const data = await getReportsSnapshot();
 
   return (
@@ -19,10 +27,14 @@ export default async function LaporanPage() {
         )}
         <ul className="mt-4 space-y-3">
           {data.reports.map((report) => (
-            <li key={report.id} className="rounded-xl border bg-background px-4 py-3">
+            <li
+              key={report.id}
+              className="rounded-xl border bg-background px-4 py-3"
+            >
               <p className="font-medium">{report.studentName}</p>
               <p className="text-xs text-muted-foreground">
-                {new Date(report.date).toLocaleDateString("id-ID")} • {report.activities}
+                {new Date(report.date).toLocaleDateString("id-ID")} •{" "}
+                {report.activities}
               </p>
             </li>
           ))}
@@ -58,7 +70,10 @@ export default async function LaporanPage() {
               ))}
               {data.assessments.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="px-2 py-6 text-center text-muted-foreground">
+                  <td
+                    colSpan={3}
+                    className="px-2 py-6 text-center text-muted-foreground"
+                  >
                     Belum ada data penilaian.
                   </td>
                 </tr>
@@ -70,4 +85,3 @@ export default async function LaporanPage() {
     </section>
   );
 }
-

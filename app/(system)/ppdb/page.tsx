@@ -1,4 +1,37 @@
-import { createAdmission } from "@/app/(system)/actions";
+import {
+  approveAdmission,
+  createAdmission,
+  rejectAdmission,
+} from "@/app/(system)/actions";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { requirePageAccess } from "@/lib/auth";
 import { getAdmissions } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
@@ -7,92 +40,195 @@ function toDateInput(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
+function admissionBadgeVariant(status: string) {
+  if (status === "APPROVED") return "default";
+  if (status === "REJECTED") return "destructive";
+  return "secondary";
+}
+
 export default async function PpdbPage() {
+  await requirePageAccess("/ppdb", ["ADMIN", "TU"]);
+
   const admissions = await getAdmissions();
 
   return (
     <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-      <div className="rounded-3xl border bg-card p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Form Pendaftaran PPDB</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Input data calon siswa baru. Data yang tersimpan akan masuk antrian verifikasi.
-        </p>
-        <form action={createAdmission} className="mt-6 grid gap-4">
-          <label className="grid gap-2 text-sm">
-            Nama Anak
-            <input name="childName" required className="rounded-xl border bg-background px-3 py-2" />
-          </label>
-          <label className="grid gap-2 text-sm">
-            Tanggal Lahir
-            <input
-              type="date"
-              name="birthDate"
-              required
-              defaultValue={toDateInput(new Date())}
-              className="rounded-xl border bg-background px-3 py-2"
-            />
-          </label>
-          <label className="grid gap-2 text-sm">
-            Nama Wali
-            <input name="parentName" required className="rounded-xl border bg-background px-3 py-2" />
-          </label>
-          <label className="grid gap-2 text-sm">
-            Telepon Wali
-            <input name="parentPhone" required className="rounded-xl border bg-background px-3 py-2" />
-          </label>
-          <label className="grid gap-2 text-sm">
-            Alamat
-            <textarea name="address" rows={2} className="rounded-xl border bg-background px-3 py-2" />
-          </label>
-          <label className="grid gap-2 text-sm">
-            Catatan
-            <textarea name="notes" rows={2} className="rounded-xl border bg-background px-3 py-2" />
-          </label>
-          <button type="submit" className="rounded-xl bg-primary px-4 py-2 text-primary-foreground">
-            Simpan Pendaftaran
-          </button>
-        </form>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Form Pendaftaran PPDB</CardTitle>
+          <CardDescription>
+            Input data calon siswa baru dan kirim ke antrian verifikasi admin.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Buat pendaftaran baru</p>
+              <p className="text-xs text-muted-foreground">
+                Form tetap memakai server action yang sama, tetapi tampil lebih
+                konsisten.
+              </p>
+            </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button>Buat Pendaftaran</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Form Pendaftaran PPDB</DialogTitle>
+                  <DialogDescription>
+                    Isi form berikut untuk membuat pendaftaran baru.
+                  </DialogDescription>
+                </DialogHeader>
+                <form action={createAdmission} className="mt-4 grid gap-4">
+                  <FieldGroup>
+                    <Field>
+                      <FieldLabel htmlFor="childName">Nama Anak</FieldLabel>
+                      <Input id="childName" name="childName" required />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="birthDate">Tanggal Lahir</FieldLabel>
+                      <Input
+                        type="date"
+                        id="birthDate"
+                        name="birthDate"
+                        required
+                        defaultValue={toDateInput(new Date())}
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="parentName">Nama Wali</FieldLabel>
+                      <Input id="parentName" name="parentName" required />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="parentPhone">
+                        Telepon Wali
+                      </FieldLabel>
+                      <Input id="parentPhone" name="parentPhone" required />
+                    </Field>
+                    <Field className="sm:col-span-2">
+                      <FieldLabel htmlFor="address">Alamat</FieldLabel>
+                      <Textarea
+                        id="address"
+                        name="address"
+                        rows={2}
+                        placeholder="Alamat rumah"
+                      />
+                    </Field>
+                    <Field className="sm:col-span-2">
+                      <FieldLabel htmlFor="notes">Catatan</FieldLabel>
+                      <Textarea
+                        id="notes"
+                        name="notes"
+                        rows={2}
+                        placeholder="Kesehatan, alergi, atau kebutuhan khusus"
+                      />
+                    </Field>
+                  </FieldGroup>
+                  <div className="flex justify-end gap-2 mt-4">
+                    <Button type="submit">Simpan Pendaftaran</Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="rounded-3xl border bg-card p-6 shadow-sm">
-        <h3 className="text-lg font-semibold">Antrian PPDB Terbaru</h3>
-        <p className="mt-1 text-sm text-muted-foreground">10 pendaftar terbaru untuk proses validasi admin.</p>
-        {!admissions.dbReady && (
-          <p className="mt-4 rounded-xl border border-dashed border-amber-300 bg-amber-100/60 px-3 py-2 text-sm text-amber-900">
-            Belum ada koneksi database.
-          </p>
-        )}
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[520px] text-sm">
-            <thead>
-              <tr className="border-b text-left text-muted-foreground">
-                <th className="px-2 py-2 font-medium">Anak</th>
-                <th className="px-2 py-2 font-medium">Wali</th>
-                <th className="px-2 py-2 font-medium">Status</th>
-                <th className="px-2 py-2 font-medium">Tanggal</th>
-              </tr>
-            </thead>
-            <tbody>
+      <Card>
+        <CardHeader>
+          <CardTitle>Antrian PPDB Terbaru</CardTitle>
+          <CardDescription>
+            10 pendaftar terbaru untuk proses validasi admin.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!admissions.dbReady && (
+            <p className="mb-4 rounded-xl border border-dashed border-amber-300 bg-amber-100/60 px-3 py-2 text-sm text-amber-900">
+              Belum ada koneksi database.
+            </p>
+          )}
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Anak</TableHead>
+                <TableHead>Wali</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Tanggal</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {admissions.rows.map((row) => (
-                <tr key={row.id} className="border-b">
-                  <td className="px-2 py-2">{row.childName}</td>
-                  <td className="px-2 py-2">{row.parentName}</td>
-                  <td className="px-2 py-2">{row.status}</td>
-                  <td className="px-2 py-2">{new Date(row.createdAt).toLocaleDateString("id-ID")}</td>
-                </tr>
+                <TableRow key={row.id}>
+                  <TableCell className="font-medium">{row.childName}</TableCell>
+                  <TableCell>{row.parentName}</TableCell>
+                  <TableCell>
+                    <Badge variant={admissionBadgeVariant(row.status)}>
+                      {row.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(row.createdAt).toLocaleDateString("id-ID")}
+                  </TableCell>
+                  <TableCell>
+                    {row.status === "PENDING" ? (
+                      <div className="flex justify-end gap-2">
+                        <form action={approveAdmission}>
+                          <input
+                            type="hidden"
+                            name="admissionId"
+                            value={row.id}
+                          />
+                          <Button
+                            type="submit"
+                            size="sm"
+                            variant="outline"
+                            className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+                          >
+                            Terima
+                          </Button>
+                        </form>
+                        <form
+                          action={rejectAdmission}
+                          className="flex items-center gap-2"
+                        >
+                          <input
+                            type="hidden"
+                            name="admissionId"
+                            value={row.id}
+                          />
+                          <Input
+                            name="reason"
+                            placeholder="Alasan"
+                            className="w-40"
+                          />
+                          <Button type="submit" size="sm" variant="destructive">
+                            Tolak
+                          </Button>
+                        </form>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                </TableRow>
               ))}
               {admissions.rows.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-2 py-6 text-center text-muted-foreground">
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="py-6 text-center text-muted-foreground"
+                  >
                     Belum ada data pendaftaran.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </section>
   );
 }
-
