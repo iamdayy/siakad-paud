@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { LogIn, Sparkles } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { loginAction } from "../auth/actions";
 import { getCurrentUser } from "@/lib/auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -99,6 +100,10 @@ export default function LoginPage() {
       <div className="absolute -top-40 -left-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl animate-pulse-soft" />
       <div className="absolute -bottom-40 -right-40 h-80 w-80 rounded-full bg-warm-pink/10 blur-3xl animate-pulse-soft delay-500" />
       <div className="absolute top-1/3 right-1/4 h-60 w-60 rounded-full bg-warm-yellow/8 blur-3xl animate-blob" />
+
+      <div className="absolute top-6 right-6">
+        <ThemeToggle />
+      </div>
 
       <Card className="relative w-full max-w-[420px] animate-scale-in overflow-hidden rounded-2xl border border-border/50 bg-card/80 shadow-2xl backdrop-blur-xl">
         {/* Decorative top gradient stripe */}
