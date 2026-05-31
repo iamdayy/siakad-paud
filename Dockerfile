@@ -21,6 +21,7 @@ RUN npx prisma generate
 
 # Next.js telemetry
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV DOCKER_BUILD=1
 
 # Build Next.js app (standalone mode configured in next.config.ts)
 RUN npm run build
