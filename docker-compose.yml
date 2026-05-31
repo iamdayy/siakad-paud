@@ -29,6 +29,7 @@ services:
       NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ""
       # MIDTRANS_SERVER_KEY: "..."
       # NEXT_PUBLIC_MIDTRANS_CLIENT_KEY: "..."
+      # FONNTE_TOKEN: "..."
     depends_on:
       - db
 

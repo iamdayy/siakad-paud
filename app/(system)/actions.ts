@@ -36,8 +36,35 @@ async function sendWhatsAppNotification(
   phone: string,
   message: string,
 ) {
-  // Mock function — in production, integrate with WhatsApp Business API
-  console.log(`[WhatsApp Mock] To: ${phone} | Message: ${message}`);
+  const token = process.env.FONNTE_TOKEN;
+  if (!token) {
+    console.log(`[WhatsApp Mock] To: ${phone} | Message: ${message}`);
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append("target", phone);
+    formData.append("message", message);
+    formData.append("countryCode", "62"); // Auto format local numbers to +62
+
+    const res = await fetch("https://api.fonnte.com/send", {
+      method: "POST",
+      headers: {
+        Authorization: token,
+      },
+      body: formData,
+    });
+
+    const json = await res.json();
+    if (!json.status) {
+      console.error(`[Fonnte Error] Failed to send WhatsApp to ${phone}:`, json.reason);
+    } else {
+      console.log(`[Fonnte Success] To: ${phone}`);
+    }
+  } catch (error) {
+    console.error(`[Fonnte Error] Failed to send WhatsApp to ${phone}`, error);
+  }
 }
 
 // ─── PPDB / Admission ──────────────────────────────────────────────────────────
