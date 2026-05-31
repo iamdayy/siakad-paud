@@ -18,30 +18,29 @@ test.describe("Teacher Role E2E", () => {
     ]);
 
     // Navigate to presensi
-    await page.goto("/guru/presensi", { waitUntil: "domcontentloaded" });
-    await expect(page.locator("text=Absensi Kehadiran Guru")).toBeVisible();
+    await page.goto("/presensi", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("text=Manajemen Presensi")).toBeVisible();
     
     // Check in if button exists
-    const checkInBtn = page.locator('button:has-text("Check In Sekarang")');
+    const checkInBtn = page.locator('button:has-text("Hadir")').first();
     if (await checkInBtn.isVisible()) {
       await checkInBtn.click();
-      await expect(page.locator('button:has-text("Check Out")')).toBeVisible();
     }
 
-    // Navigate to raport
-    await page.goto("/guru/raport", { waitUntil: "domcontentloaded" });
-    await expect(page.locator("text=Penilaian E-Raport")).toBeVisible();
+    // Navigate to raport (Laporan)
+    await page.goto("/laporan", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("text=Laporan Perkembangan Anak (E-Raport)")).toBeVisible();
 
-    // Check if there are any students to grade
-    const isiRaportBtn = page.locator('button:has-text("Isi Raport")').first();
-    if (await isiRaportBtn.isVisible()) {
-      await isiRaportBtn.click();
+    // Check if there are any students to grade by opening the Daily Report Dialog
+    const isiDailyReportBtn = page.locator('button:has-text("Isi Daily Report")').first();
+    if (await isiDailyReportBtn.isVisible()) {
+      await isiDailyReportBtn.click();
       await expect(page.locator('div[role="dialog"]')).toBeVisible();
-      await expect(page.locator("text=Formulir E-Raport PAUD")).toBeVisible();
+      await expect(page.locator("text=Buku Penghubung")).toBeVisible();
       
       // Try to select an indicator
-      await page.selectOption('div[role="dialog"] select[name="agamaMoral"]', "BSH");
-      await page.fill('div[role="dialog"] textarea[name="narasiAgamaMoral"]', "Anak sangat baik dalam mengingat doa harian.");
+      await page.selectOption('div[role="dialog"] select[name="foodPortion"]', "HABIS");
+      await page.fill('div[role="dialog"] textarea[name="notes"]', "Anak sangat baik dalam mengingat doa harian.");
       
       // We cancel or escape to not clutter DB in tests unless we want to submit
       await page.keyboard.press("Escape");
