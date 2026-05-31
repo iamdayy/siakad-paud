@@ -5,11 +5,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const navLinks = [
-  { href: "#programs", label: "Program" },
-  { href: "#keunggulan", label: "Keunggulan" },
-  { href: "#guru", label: "Guru Kami" },
-  { href: "#galeri", label: "Galeri" },
-  { href: "#testimoni", label: "Testimoni" },
+  { href: "/#programs", label: "Program" },
+  { href: "/#keunggulan", label: "Keunggulan" },
+  { href: "/#guru", label: "Guru Kami" },
+  { href: "/#galeri", label: "Galeri" },
+  { href: "/#testimoni", label: "Testimoni" },
 ];
 
 export function Navbar() {
@@ -24,11 +24,10 @@ export function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "glass border-b shadow-sm"
-          : "bg-transparent"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+        ? "glass border-b shadow-sm"
+        : "bg-transparent"
+        }`}
     >
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
         {/* Logo */}
@@ -68,7 +67,7 @@ export function Navbar() {
             Masuk
           </Link>
           <Link
-            href="/ppdb"
+            href="/ppdb-public"
             className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/25 transition-all hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5"
           >
             Daftar Sekarang

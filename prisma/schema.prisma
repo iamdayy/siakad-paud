@@ -7,30 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum AdmissionStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-enum StudentStatus {
-  ACTIVE
-  GRADUATED
-  INACTIVE
-}
-
-enum AttendanceStatus {
-  PRESENT
-  SICK
-  PERMIT
-  ABSENT
-}
-
-enum InvoiceStatus {
-  UNPAID
-  PARTIAL
-  PAID
-}
+// ─── Enums ─────────────────────────────────────────────────────────────────────
 
 enum Role {
   ADMIN
@@ -40,83 +17,271 @@ enum Role {
   ORANG_TUA
 }
 
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum StudentStatus {
+  ACTIVE
+  GRADUATED
+  MUTATED
+  INACTIVE
+}
+
+enum AttendanceStatus {
+  PRESENT
+  SICK
+  PERMITTED
+  ABSENT
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PARTIAL
+  PAID
+}
+
+enum InvoiceCategory {
+  SPP
+  PANGKAL
+  CATERING
+  JEMPUTAN
+  OUTING
+  BUKU
+  LAINNYA
+}
+
 enum PaymentMethod {
   CASH
   TRANSFER
   QRIS
 }
 
+enum AssessmentIndicator {
+  BB
+  MB
+  BSH
+  BSB
+}
+
+enum ExpenseCategory {
+  GAJI
+  OPERASIONAL
+  APE
+  ATK
+  PEMELIHARAAN
+  LAINNYA
+}
+
+enum TeacherPosition {
+  KEPALA_SEKOLAH
+  GURU_KELAS
+  GURU_PENDAMPING
+  STAFF_ADMINISTRASI
+}
+
+// ─── User ──────────────────────────────────────────────────────────────────────
+
 model User {
-  id           String   @id @default(cuid())
-  username     String   @unique
+  id           String    @id @default(cuid())
+  username     String    @unique
   displayName  String
   role         Role
   passwordHash String
-  passwordSalt String
-  isActive     Boolean  @default(true)
+  isActive     Boolean   @default(true)
   lastLoginAt  DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Optional linkage to profile entities
+  teacherId String?  @unique
+  teacher   Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+
+  parentId String?  @unique
+  parent   Parent?  @relation(fields: [parentId], references: [id], onDelete: SetNull)
 }
 
-model Teacher {
-  id        String     @id @default(cuid())
-  name      String
-  email     String?    @unique
-  phone     String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  classrooms Classroom[]
+// ─── Parent / Wali ─────────────────────────────────────────────────────────────
+
+model Parent {
+  id         String  @id @default(cuid())
+  fatherName String?
+  motherName String?
+  nik        String?
+  fatherJob  String?
+  motherJob  String?
+  whatsapp   String
+  phone      String?
+  email      String?
+  address    String?
+
+  students Student[]
+  user     User?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model Classroom {
-  id         String    @id @default(cuid())
-  name       String
-  level      String
-  schoolYear String
-  teacherId  String?
-  teacher    Teacher?  @relation(fields: [teacherId], references: [id], onDelete: SetNull)
-  students   Student[]
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-}
-
-model Admission {
-  id            String         @id @default(cuid())
-  childName      String
-  birthDate      DateTime
-  parentName     String
-  parentPhone    String
-  address        String?
-  status         AdmissionStatus @default(PENDING)
-  notes          String?
-  approvedAt     DateTime?
-  convertedToId  String?        @unique
-  convertedTo    Student?       @relation("AdmissionToStudent", fields: [convertedToId], references: [id], onDelete: SetNull)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-}
+// ─── Student ───────────────────────────────────────────────────────────────────
 
 model Student {
-  id           String          @id @default(cuid())
-  fullName     String
-  nickName     String?
-  birthDate    DateTime
-  gender       String?
-  guardianName String
-  guardianPhone String
-  address      String?
-  status       StudentStatus   @default(ACTIVE)
-  classroomId  String?
-  classroom    Classroom?      @relation(fields: [classroomId], references: [id], onDelete: SetNull)
-  admission    Admission?      @relation("AdmissionToStudent")
+  id                    String        @id @default(cuid())
+  nis                   String?       @unique
+  fullName              String
+  nickName              String?
+  birthPlace            String?
+  birthDate             DateTime
+  gender                String?
+  nik                   String?
+  siblingCount          Int?
+  immunizationHistory   String?
+  allergies             String?
+  specialNeeds          String?
+  address               String?
+  status                StudentStatus @default(ACTIVE)
+
+  parentId    String?
+  parent      Parent?     @relation(fields: [parentId], references: [id], onDelete: SetNull)
+  classroomId String?
+  classroom   Classroom?  @relation(fields: [classroomId], references: [id], onDelete: SetNull)
+  admission   Admission?  @relation("AdmissionToStudent")
+
   attendances  Attendance[]
   invoices     Invoice[]
   reports      DailyReport[]
   assessments  Assessment[]
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
+
+// ─── Admission / PPDB ──────────────────────────────────────────────────────────
+
+model Admission {
+  id String @id @default(cuid())
+
+  // Child data
+  childName   String
+  nickName    String?
+  birthPlace  String?
+  birthDate   DateTime
+  gender      String?
+  childNik    String?
+  siblingCount Int?
+  immunizationHistory String?
+  allergies   String?
+  specialNeeds String?
+
+  // Parent data
+  fatherName  String?
+  motherName  String?
+  parentNik   String?
+  fatherJob   String?
+  motherJob   String?
+  whatsapp    String
+  parentPhone String?
+  address     String?
+
+  // Documents (stored as JSON array of URLs)
+  documentBirthCert String?
+  documentKK        String?
+  documentKTP       String?
+
+  // Process
+  status        RegistrationStatus @default(PENDING)
+  notes         String?
+  approvedAt    DateTime?
+  convertedToId String?            @unique
+  convertedTo   Student?           @relation("AdmissionToStudent", fields: [convertedToId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Teacher / Guru ────────────────────────────────────────────────────────────
+
+model Teacher {
+  id                  String          @id @default(cuid())
+  name                String
+  nik                 String?
+  birthPlace          String?
+  birthDate           DateTime?
+  email               String?         @unique
+  phone               String?
+  lastEducation       String?
+  certificationNumber String?
+  position            TeacherPosition @default(GURU_KELAS)
+
+  // Classrooms where this teacher is main or co-teacher
+  mainClassrooms Classroom[] @relation("MainTeacher")
+  coClassrooms   Classroom[] @relation("CoTeacher")
+
+  attendances TeacherAttendance[]
+  lessonPlans LessonPlan[]
+  user        User?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Teacher Attendance ────────────────────────────────────────────────────────
+
+model TeacherAttendance {
+  id        String           @id @default(cuid())
+  teacherId String
+  teacher   Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  date      DateTime
+  status    AttendanceStatus
+  checkIn   DateTime?
+  checkOut  DateTime?
+  note      String?
+  createdAt DateTime         @default(now())
+
+  @@unique([teacherId, date])
+  @@index([teacherId, date])
+}
+
+// ─── Lesson Plan (RPPH / RPPM) ─────────────────────────────────────────────────
+
+model LessonPlan {
+  id         String   @id @default(cuid())
+  teacherId  String
+  teacher    Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  title      String
+  type       String   // "RPPH" or "RPPM"
+  weekDate   DateTime
+  fileUrl    String?
+  content    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([teacherId, weekDate])
+}
+
+// ─── Classroom ─────────────────────────────────────────────────────────────────
+
+model Classroom {
+  id         String  @id @default(cuid())
+  name       String
+  level      String  // Daycare, KB, TK A, TK B
+  schoolYear String
+  maxCapacity Int    @default(15)
+
+  mainTeacherId String?
+  mainTeacher   Teacher? @relation("MainTeacher", fields: [mainTeacherId], references: [id], onDelete: SetNull)
+
+  coTeacherId String?
+  coTeacher   Teacher? @relation("CoTeacher", fields: [coTeacherId], references: [id], onDelete: SetNull)
+
+  students Student[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Student Attendance ────────────────────────────────────────────────────────
 
 model Attendance {
   id        String           @id @default(cuid())
@@ -127,38 +292,64 @@ model Attendance {
   note      String?
   createdAt DateTime         @default(now())
 
+  @@unique([studentId, date])
   @@index([studentId, date])
 }
 
+// ─── Invoice (Tagihan) ─────────────────────────────────────────────────────────
+
 model Invoice {
-  id          String        @id @default(cuid())
-  code        String        @unique
+  id          String          @id @default(cuid())
+  code        String          @unique
   studentId   String
-  student     Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student     Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  category    InvoiceCategory @default(SPP)
   periodMonth Int
   periodYear  Int
   amount      Int
+  fineAmount  Int             @default(0)
   dueDate     DateTime
-  status      InvoiceStatus @default(UNPAID)
+  status      InvoiceStatus   @default(UNPAID)
   payments    Payment[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   @@index([studentId, periodMonth, periodYear])
 }
 
+// ─── Payment (Pembayaran) ──────────────────────────────────────────────────────
+
 model Payment {
-  id         String        @id @default(cuid())
-  invoiceId  String
-  invoice    Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  amount     Int
-  method     PaymentMethod @default(TRANSFER)
-  paidAt     DateTime
-  note       String?
-  createdAt  DateTime      @default(now())
+  id        String        @id @default(cuid())
+  invoiceId String
+  invoice   Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount    Int
+  method    PaymentMethod @default(TRANSFER)
+  paidAt    DateTime
+  note      String?
+  createdAt DateTime      @default(now())
 
   @@index([invoiceId, paidAt])
 }
+
+// ─── Expense (Pengeluaran Kas) ─────────────────────────────────────────────────
+
+model Expense {
+  id          String          @id @default(cuid())
+  code        String          @unique
+  category    ExpenseCategory
+  description String
+  amount      Int
+  date        DateTime
+  recipient   String?
+  note        String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([date, category])
+}
+
+// ─── Daily Report (Buku Penghubung) ────────────────────────────────────────────
 
 model DailyReport {
   id         String   @id @default(cuid())
@@ -166,27 +357,58 @@ model DailyReport {
   student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   reportDate DateTime
   meals      String?
-  nap        String?
+  napDuration String?
+  mood       String?
   activities String
   note       String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  @@unique([studentId, reportDate])
   @@index([studentId, reportDate])
 }
+
+// ─── Assessment / E-Raport (Penilaian Kualitatif) ──────────────────────────────
 
 model Assessment {
   id          String   @id @default(cuid())
   studentId   String
   student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  periodLabel String
-  social      Int
-  cognitive   Int
-  motoric     Int
-  language    Int
-  note        String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  periodLabel String   // e.g., "Semester 1 2025/2026"
 
+  // 6 aspek perkembangan PAUD (kualitatif)
+  agamaMoral       AssessmentIndicator
+  fisikMotorik     AssessmentIndicator
+  kognitif         AssessmentIndicator
+  bahasa           AssessmentIndicator
+  sosialEmosional  AssessmentIndicator
+  seni             AssessmentIndicator
+
+  // Narasi deskriptif per aspek (untuk raport narasi)
+  narasiAgamaMoral      String?
+  narasiFisikMotorik    String?
+  narasiKognitif        String?
+  narasiBahasa          String?
+  narasiSosialEmosional String?
+  narasiSeni            String?
+
+  // Catatan umum & rekomendasi guru
+  narrative String?
+  note      String?
+  
+  isPublished Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, periodLabel])
   @@index([studentId, periodLabel])
+}
+
+// ─── System Settings (Key-Value Config) ────────────────────────────────────────
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }

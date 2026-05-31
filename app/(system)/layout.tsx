@@ -1,17 +1,27 @@
 import { logoutAction } from "@/app/auth/actions";
 import { getCurrentUser } from "@/lib/auth";
 import { canAccessPath } from "@/lib/session";
+import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
-
-const menus = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/ppdb", label: "PPDB" },
-  { href: "/siswa", label: "Siswa" },
-  { href: "/guru", label: "Guru" },
-  { href: "/presensi", label: "Presensi" },
-  { href: "/keuangan", label: "Keuangan" },
-  { href: "/laporan", label: "Laporan" },
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+const ALL_MAIN_PATHS = [
+  "/dashboard",
+  "/ppdb",
+  "/siswa",
+  "/guru",
+  "/kelas",
+  "/presensi",
+  "/keuangan",
+  "/laporan",
+  "/admin/pengaturan",
 ];
+
+const ALL_GURU_PATHS = ["/guru/kelas", "/guru/presensi", "/guru/raport"];
 
 export default async function SystemLayout({
   children,
@@ -19,54 +29,35 @@ export default async function SystemLayout({
   children: React.ReactNode;
 }) {
   const currentUser = await getCurrentUser();
-  const visibleMenus = currentUser
-    ? menus.filter((menu) => canAccessPath(currentUser.role, menu.href))
+  const visiblePaths = currentUser
+    ? ALL_MAIN_PATHS.filter((path) => canAccessPath(currentUser.role, path))
     : [];
 
+  const visibleGuruPaths =
+    currentUser?.role === "GURU" || currentUser?.role === "ADMIN" || currentUser?.role === "KEPALA_SEKOLAH"
+      ? ALL_GURU_PATHS
+      : [];
+
   return (
-    <div className="min-h-screen bg-muted/40">
-      <header className="border-b bg-card">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-              SIAKAD PAUD
-            </p>
-            <h1 className="text-lg font-semibold">Sistem Akademik Terpadu</h1>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <nav className="flex flex-wrap gap-2">
-              {visibleMenus.map((menu) => (
-                <Link
-                  key={menu.href}
-                  href={menu.href}
-                  className="rounded-full border bg-background px-4 py-2 text-sm transition-colors hover:bg-secondary"
-                >
-                  {menu.label}
-                </Link>
-              ))}
-            </nav>
-            {currentUser && (
-              <div className="flex items-center gap-3 rounded-full border bg-background px-3 py-1.5 text-sm">
-                <span className="text-muted-foreground">
-                  {currentUser.displayName}
-                </span>
-                <span className="rounded-full bg-secondary px-2 py-0.5 text-xs uppercase tracking-wide">
-                  {currentUser.role}
-                </span>
-                <form action={logoutAction}>
-                  <button
-                    type="submit"
-                    className="text-sm font-medium text-primary"
-                  >
-                    Keluar
-                  </button>
-                </form>
-              </div>
-            )}
-          </div>
+    <SidebarProvider>
+      <AppSidebar
+        user={currentUser}
+        visiblePaths={visiblePaths}
+        visibleGuruPaths={visibleGuruPaths}
+        logoutAction={logoutAction}
+      />
+
+      <SidebarInset>
+        {/* Top bar for mobile trigger */}
+        <header className="flex h-14 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-lg md:hidden">
+          <SidebarTrigger />
+          <span className="text-sm font-bold tracking-tight">SIAKAD PAUD</span>
+        </header>
+
+        <div className="flex-1 p-4 md:p-6">
+          {children}
         </div>
-      </header>
-      <main className="mx-auto w-full max-w-6xl px-6 py-6">{children}</main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

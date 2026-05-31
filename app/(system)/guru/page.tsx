@@ -3,6 +3,7 @@ import {
   deleteTeacher,
   updateTeacher,
 } from "@/app/(system)/actions";
+import Link from "next/link";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,8 +31,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -40,8 +54,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { requirePageAccess } from "@/lib/auth";
 import { getTeachers } from "@/lib/data";
+import { Eye, Plus, UserCheck, MoreHorizontal, Edit, Trash, GraduationCap, UserPlus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -52,33 +68,51 @@ export default async function GuruPage() {
 
   return (
     <section className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Manajemen Guru</CardTitle>
-          <CardDescription>
-            Tambah dan kelola data guru dengan komponen shadcn/ui.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      {/* Header */}
+      <div className="rounded-3xl border bg-gradient-to-br from-warm-green/10 via-accent/10 to-transparent p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <GraduationCap className="h-6 w-6 text-primary" />
+              Manajemen Guru & Staf
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Kelola data pendidik dan tenaga kependidikan (PTK).
+            </p>
+          </div>
           <Dialog>
             <DialogTrigger asChild>
-              <Button>Tambah Guru</Button>
+              <Button className="gap-2">
+                <UserPlus className="h-4 w-4" />
+                Tambah Guru
+              </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Tambah Guru</DialogTitle>
+                <DialogTitle>Tambah Guru / Staf</DialogTitle>
                 <DialogDescription>
-                  Isi form berikut untuk menambahkan guru baru ke dalam sistem.
+                  Isi biodata guru baru ke dalam sistem.
                 </DialogDescription>
               </DialogHeader>
-              <form
-                action={createTeacher}
-                className="mt-2 grid gap-4 sm:grid-cols-3"
-              >
+              <form action={createTeacher} className="mt-2 space-y-4">
                 <FieldGroup>
                   <Field>
-                    <FieldLabel htmlFor="name">Nama</FieldLabel>
+                    <FieldLabel htmlFor="name">Nama Lengkap</FieldLabel>
                     <Input id="name" name="name" required />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="position">Jabatan</FieldLabel>
+                    <Select name="position">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih jabatan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="KEPALA_SEKOLAH">Kepala Sekolah</SelectItem>
+                        <SelectItem value="GURU_KELAS">Guru Kelas</SelectItem>
+                        <SelectItem value="GURU_PENDAMPING">Guru Pendamping</SelectItem>
+                        <SelectItem value="STAFF_ADMINISTRASI">Staff Administrasi</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="email">Email</FieldLabel>
@@ -88,15 +122,23 @@ export default async function GuruPage() {
                     <FieldLabel htmlFor="phone">Telepon</FieldLabel>
                     <Input id="phone" name="phone" />
                   </Field>
+                  <Field>
+                    <FieldLabel htmlFor="lastEducation">Pendidikan Terakhir</FieldLabel>
+                    <Input id="lastEducation" name="lastEducation" placeholder="S1 PGPAUD" />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="certificationNumber">No. Sertifikasi</FieldLabel>
+                    <Input id="certificationNumber" name="certificationNumber" placeholder="Opsional" />
+                  </Field>
                 </FieldGroup>
-                <div className="sm:col-span-3 flex justify-end gap-2 mt-4">
+                <div className="flex justify-end">
                   <Button type="submit">Simpan Guru</Button>
                 </div>
               </form>
             </DialogContent>
           </Dialog>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <Card>
         <CardContent className="pt-6">
@@ -110,8 +152,10 @@ export default async function GuruPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nama</TableHead>
+                <TableHead>Jabatan</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Telepon</TableHead>
+                <TableHead>Pendidikan</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
@@ -119,118 +163,145 @@ export default async function GuruPage() {
               {teachers.rows.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell className="font-medium">{t.name}</TableCell>
-                  <TableCell>{t.email ?? "-"}</TableCell>
-                  <TableCell>{t.phone ?? "-"}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button size="sm" variant="outline">
-                            Edit
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Edit Guru</DialogTitle>
-                            <DialogDescription>
-                              Ubah informasi guru sesuai kebutuhan.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <form action={updateTeacher}>
-                            <FieldGroup className="mt-4">
-                              <Field>
-                                <FieldLabel htmlFor={`name-${t.id}`}>
-                                  Nama
-                                </FieldLabel>
-                                <Input
-                                  id={`name-${t.id}`}
-                                  name="name"
-                                  defaultValue={t.name}
-                                  required
-                                />
-                              </Field>
-                              <Field>
-                                <FieldLabel htmlFor={`email-${t.id}`}>
-                                  Email
-                                </FieldLabel>
-                                <Input
-                                  id={`email-${t.id}`}
-                                  name="email"
-                                  type="email"
-                                  defaultValue={t.email ?? ""}
-                                />
-                              </Field>
-                              <Field>
-                                <FieldLabel htmlFor={`phone-${t.id}`}>
-                                  Telepon
-                                </FieldLabel>
-                                <Input
-                                  id={`phone-${t.id}`}
-                                  name="phone"
-                                  defaultValue={t.phone ?? ""}
-                                />
-                              </Field>
-                            </FieldGroup>
-                            <div className="mt-2 flex justify-end gap-2 mt-4">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                data-modal-close
-                              >
-                                Batal
-                              </Button>
-                              <Button type="submit">Simpan</Button>
-                            </div>
-                          </form>
-                        </DialogContent>
-                      </Dialog>
+                  <TableCell>
+                    <Badge variant="ghost" color="default">
+                      {t.position.replace("_", " ")}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm">{t.email ?? "-"}</TableCell>
+                  <TableCell className="text-sm">{t.phone ?? "-"}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{t.lastEducation ?? "-"}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/guru/${t.id}`} className="cursor-pointer">
+                            <Eye className="mr-2 h-4 w-4 text-muted-foreground" />
+                            Lihat Profil
+                          </Link>
+                        </DropdownMenuItem>
 
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="destructive">
-                            Hapus
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Konfirmasi Hapus Guru
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Apakah Anda yakin ingin menghapus guru ini?
-                              Tindakan ini tidak dapat dibatalkan.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <form action={deleteTeacher} className="grid gap-4">
-                            <input
-                              type="hidden"
-                              name="teacherId"
-                              value={t.id}
-                            />
-                            <p>
-                              Yakin ingin menghapus guru{" "}
-                              <strong>{t.name}</strong>?
-                            </p>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Batal</AlertDialogCancel>
-                              <AlertDialogAction asChild>
-                                <Button type="submit" variant="destructive">
-                                  Hapus
-                                </Button>
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </form>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                        <DropdownMenuItem asChild>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <button className="w-full text-left flex items-center cursor-pointer px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground rounded-sm">
+                                <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
+                                Edit Guru
+                              </button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Edit Guru</DialogTitle>
+                                <DialogDescription>
+                                  Ubah informasi guru sesuai kebutuhan.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <form action={updateTeacher}>
+                                <FieldGroup className="mt-4">
+                                  <Field>
+                                    <FieldLabel htmlFor={`name-${t.id}`}>
+                                      Nama
+                                    </FieldLabel>
+                                    <Input
+                                      id={`name-${t.id}`}
+                                      name="name"
+                                      defaultValue={t.name}
+                                      required
+                                    />
+                                  </Field>
+                                  <Field>
+                                    <FieldLabel htmlFor={`email-${t.id}`}>
+                                      Email
+                                    </FieldLabel>
+                                    <Input
+                                      id={`email-${t.id}`}
+                                      name="email"
+                                      type="email"
+                                      defaultValue={t.email ?? ""}
+                                    />
+                                  </Field>
+                                  <Field>
+                                    <FieldLabel htmlFor={`phone-${t.id}`}>
+                                      Telepon
+                                    </FieldLabel>
+                                    <Input
+                                      id={`phone-${t.id}`}
+                                      name="phone"
+                                      defaultValue={t.phone ?? ""}
+                                    />
+                                  </Field>
+                                </FieldGroup>
+                                <div className="mt-4 flex justify-end gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    data-modal-close
+                                  >
+                                    Batal
+                                  </Button>
+                                  <Button type="submit">Simpan</Button>
+                                </div>
+                              </form>
+                            </DialogContent>
+                          </Dialog>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem asChild>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <button className="w-full text-left flex items-center cursor-pointer px-2 py-1.5 text-sm outline-none text-destructive hover:bg-destructive/10 hover:text-destructive rounded-sm">
+                                <Trash className="mr-2 h-4 w-4" />
+                                Hapus
+                              </button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Konfirmasi Hapus Guru
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Apakah Anda yakin ingin menghapus guru ini?
+                                  Tindakan ini tidak dapat dibatalkan.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <form action={deleteTeacher} className="grid gap-4">
+                                <input
+                                  type="hidden"
+                                  name="teacherId"
+                                  value={t.id}
+                                />
+                                <p>
+                                  Yakin ingin menghapus guru{" "}
+                                  <strong>{t.name}</strong>?
+                                </p>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Batal</AlertDialogCancel>
+                                  <AlertDialogAction asChild>
+                                    <Button type="submit" variant="destructive">
+                                      Hapus
+                                    </Button>
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </form>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
               {teachers.rows.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
-                    className="py-6 text-center text-muted-foreground"
+                    colSpan={6}
+                    className="py-8 text-center text-muted-foreground"
                   >
                     Belum ada data guru.
                   </TableCell>

@@ -1,5 +1,13 @@
 import { recordAttendance } from "@/app/(system)/actions";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -16,10 +25,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { requirePageAccess } from "@/lib/auth";
+import { requirePageAccess, getCurrentUser } from "@/lib/auth";
 import { getAttendanceLogs, getStudents } from "@/lib/data";
-import { Input } from "@base-ui/react";
+import {
+  CalendarCheck,
+  UserCheck,
+  UserX,
+  Clock,
+  Plus,
+} from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -27,131 +50,236 @@ function toDateInput(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
+function statusColor(status: string) {
+  switch (status) {
+    case "Hadir":
+      return "success";
+    case "Sakit":
+      return "warning";
+    case "Izin":
+      return "default";
+    case "Alpa":
+      return "destructive";
+    default:
+      return "default";
+  }
+}
+
 export default async function PresensiPage() {
   await requirePageAccess("/presensi", ["ADMIN", "TU", "GURU"]);
 
+  const user = await getCurrentUser();
+  const teacherId = user?.role === "GURU" && user.teacherId ? user.teacherId : undefined;
+
   const [logs, students] = await Promise.all([
-    getAttendanceLogs(),
-    getStudents(),
+    getAttendanceLogs(teacherId),
+    getStudents(teacherId),
   ]);
 
+  // Count today's stats
+  const today = new Date().toDateString();
+  const todayLogs = logs.rows.filter(
+    (r) => new Date(r.date).toDateString() === today,
+  );
+  const presentToday = todayLogs.filter((r) => r.rawStatus === "PRESENT").length;
+  const absentToday = todayLogs.filter(
+    (r) => r.rawStatus !== "PRESENT",
+  ).length;
+
   return (
-    <section className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-      <div className="rounded-3xl border bg-card p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Input Presensi</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Catat kehadiran harian siswa untuk pemantauan kelas dan rekap absensi.
+    <section className="space-y-6">
+      {/* Header */}
+      <div className="rounded-3xl border bg-gradient-to-br from-warm-blue/10 via-accent/10 to-transparent p-6 shadow-sm">
+        <h2 className="text-2xl font-bold tracking-tight">
+          Presensi Harian Siswa
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Catat dan pantau kehadiran harian siswa. Notifikasi otomatis akan
+          dikirim ke orang tua saat anak tercatat hadir.
         </p>
-        <Dialog>
-          <DialogTrigger className="mt-4 inline-block rounded-xl bg-primary px-4 py-2 text-primary-foreground">
-            Tambah Presensi
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Tambah Presensi Siswa</DialogTitle>
-              <DialogDescription>
-                Isi form berikut untuk menambahkan presensi siswa.
-              </DialogDescription>
-            </DialogHeader>
-            <form action={recordAttendance} className="mt-2 grid gap-4">
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="studentId">Siswa</FieldLabel>
-                  <Select name="studentId" required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih siswa" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {students.rows.map((student) => (
-                        <SelectItem key={student.id} value={student.id}>
-                          {student.fullName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="date">Tanggal</FieldLabel>
-                  <Input
-                    type="date"
-                    name="date"
-                    required
-                    defaultValue={toDateInput(new Date())}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="status">Status</FieldLabel>
-                  <Select name="status" required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PRESENT">Hadir</SelectItem>
-                      <SelectItem value="SICK">Sakit</SelectItem>
-                      <SelectItem value="PERMIT">Izin</SelectItem>
-                      <SelectItem value="ABSENT">Alpa</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="note">Catatan</FieldLabel>
-                  <Textarea
-                    name="note"
-                    rows={2}
-                    placeholder="Catatan tambahan (opsional)"
-                  />
-                </Field>
-              </FieldGroup>
-              <div className="flex justify-end mt-4">
-                <Button type="submit">Simpan Presensi</Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
       </div>
 
-      <div className="rounded-3xl border bg-card p-6 shadow-sm">
-        <h3 className="text-lg font-semibold">Log Presensi Terbaru</h3>
-        {!logs.dbReady && (
-          <p className="mt-4 rounded-xl border border-dashed border-amber-300 bg-amber-100/60 px-3 py-2 text-sm text-amber-900">
-            Belum ada koneksi database.
-          </p>
-        )}
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[540px] text-sm">
-            <thead>
-              <tr className="border-b text-left text-muted-foreground">
-                <th className="px-2 py-2 font-medium">Siswa</th>
-                <th className="px-2 py-2 font-medium">Tanggal</th>
-                <th className="px-2 py-2 font-medium">Status</th>
-                <th className="px-2 py-2 font-medium">Catatan</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.rows.map((row) => (
-                <tr key={row.id} className="border-b">
-                  <td className="px-2 py-2">{row.studentName}</td>
-                  <td className="px-2 py-2">
-                    {new Date(row.date).toLocaleDateString("id-ID")}
-                  </td>
-                  <td className="px-2 py-2">{row.status}</td>
-                  <td className="px-2 py-2">{row.note ?? "-"}</td>
-                </tr>
-              ))}
-              {logs.rows.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-2 py-6 text-center text-muted-foreground"
-                  >
-                    Belum ada log presensi.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+      {/* Quick Stats + Add Attendance */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Hadir Hari Ini
+            </CardTitle>
+            <UserCheck className="h-4 w-4 text-warm-green" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{presentToday}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Tidak Hadir
+            </CardTitle>
+            <UserX className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-destructive">{absentToday}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Log
+            </CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{logs.rows.length}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="flex items-center justify-center">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button size="lg" className="gap-2">
+                <Plus className="h-4 w-4" />
+                Tambah Presensi
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Tambah Presensi Siswa</DialogTitle>
+                <DialogDescription>
+                  Catat kehadiran siswa. Notifikasi WhatsApp akan dikirim ke
+                  orang tua jika siswa hadir.
+                </DialogDescription>
+              </DialogHeader>
+              <form action={recordAttendance} className="mt-2 grid gap-4">
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel htmlFor="studentId">Siswa</FieldLabel>
+                    <Select name="studentId" required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih siswa" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {students.rows.map((student) => (
+                          <SelectItem key={student.id} value={student.id}>
+                            {student.fullName}
+                            {student.nickName
+                              ? ` (${student.nickName})`
+                              : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="date">Tanggal</FieldLabel>
+                    <Input
+                      type="date"
+                      name="date"
+                      required
+                      defaultValue={toDateInput(new Date())}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="status">Status</FieldLabel>
+                    <Select name="status" required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PRESENT">Hadir</SelectItem>
+                        <SelectItem value="SICK">Sakit</SelectItem>
+                        <SelectItem value="PERMITTED">Izin</SelectItem>
+                        <SelectItem value="ABSENT">Alpa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="note">Catatan</FieldLabel>
+                    <Textarea
+                      name="note"
+                      rows={2}
+                      placeholder="Catatan tambahan (opsional)"
+                    />
+                  </Field>
+                </FieldGroup>
+                <div className="flex justify-end mt-4">
+                  <Button type="submit">Simpan Presensi</Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </Card>
       </div>
+
+      {/* Log Table */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <CalendarCheck className="h-5 w-5 text-primary" />
+            <div>
+              <CardTitle>Log Presensi Terbaru</CardTitle>
+              <CardDescription>
+                30 entri presensi terakhir dari seluruh kelas.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!logs.dbReady && (
+            <p className="mb-4 rounded-xl border border-dashed border-amber-300 bg-amber-100/60 px-3 py-2 text-sm text-amber-900">
+              Belum ada koneksi database.
+            </p>
+          )}
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Siswa</TableHead>
+                  <TableHead>Tanggal</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Catatan</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs.rows.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell className="font-medium">
+                      {row.studentName}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {new Date(row.date).toLocaleDateString("id-ID")}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="ghost"
+                        color={statusColor(row.status)}
+                      >
+                        {row.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {row.note ?? "-"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {logs.rows.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="py-8 text-center text-muted-foreground"
+                    >
+                      Belum ada log presensi.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </section>
   );
 }

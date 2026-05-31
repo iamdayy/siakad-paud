@@ -1,57 +1,66 @@
-import {
-  canAccessPath,
-  PROTECTED_ROUTE_RULES,
-  SESSION_COOKIE,
-  verifySessionToken,
-} from "@/lib/session";
-import { NextRequest, NextResponse } from "next/server";
-
-function isStaticAsset(pathname: string) {
-  return (
-    pathname.startsWith("/_next/") ||
-    pathname === "/favicon.ico" ||
-    pathname.includes(".")
-  );
-}
-
-function findProtectedRule(pathname: string) {
-  return PROTECTED_ROUTE_RULES.find(
-    (rule) => pathname === rule.path || pathname.startsWith(`${rule.path}/`),
-  );
-}
+import { canAccessPath, SESSION_COOKIE, verifySessionToken } from "@/lib/session";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  const { pathname, search } = request.nextUrl;
+  const { pathname } = request.nextUrl;
 
-  if (isStaticAsset(pathname)) {
+  // Static files and public routes
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/public") ||
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname.startsWith("/ppdb-public") ||
+    pathname.startsWith("/api/ppdb/submit") ||
+    pathname.startsWith("/api/midtrans/webhook")
+  ) {
     return NextResponse.next();
   }
 
+  // Protect all other routes
   const token = request.cookies.get(SESSION_COOKIE)?.value;
-  const payload = token ? await verifySessionToken(token) : null;
-
-  if (pathname === "/login" && payload) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
-  const protectedRule = findProtectedRule(pathname);
-  if (!protectedRule) {
-    return NextResponse.next();
-  }
-
-  if (!payload) {
+  if (!token) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", `${pathname}${search}`);
+    loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (!canAccessPath(payload.role, pathname)) {
-    return NextResponse.redirect(new URL("/unauthorized", request.url));
+  const payload = await verifySessionToken(token);
+  if (!payload) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", pathname);
+    const response = NextResponse.redirect(loginUrl);
+    response.cookies.delete(SESSION_COOKIE);
+    return response;
+  }
+
+  // Authorization Check
+  // We extract the base path (e.g., /dashboard, /parent)
+  const basePath = `/${pathname.split("/")[1]}`;
+
+  // Specific checks based on root paths
+  if (!pathname.startsWith("/api")) {
+    if (basePath === "/portal" && payload.role !== "ORANG_TUA") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    if (basePath !== "/portal" && payload.role === "ORANG_TUA") {
+      return NextResponse.redirect(new URL("/portal", request.url));
+    }
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    "/((?!_next/static|_next/image|favicon.ico).*)",
+  ],
 };

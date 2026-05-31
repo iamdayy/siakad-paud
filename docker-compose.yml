@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: siakad_db
+    restart: always
+    environment:
+      POSTGRES_USER: siakad_user
+      POSTGRES_PASSWORD: siakad_password
+      POSTGRES_DB: siakad_paud
+    ports:
+      - "5432:5432"
+    volumes:
+      - siakad_pgdata:/var/lib/postgresql/data
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: siakad_web
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Koneksi database menunjuk ke service "db" (bukan localhost)
+      DATABASE_URL: "postgresql://siakad_user:siakad_password@db:5432/siakad_paud?schema=public"
+      # Tambahkan env variables lain yang dibutuhkan oleh aplikasi
+      NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ""
+      # MIDTRANS_SERVER_KEY: "..."
+      # NEXT_PUBLIC_MIDTRANS_CLIENT_KEY: "..."
+    depends_on:
+      - db
+
+volumes:
+  siakad_pgdata:

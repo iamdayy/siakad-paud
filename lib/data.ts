@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { AttendanceStatus, InvoiceStatus } from "@prisma/client";
+import { AttendanceStatus, InvoiceStatus, AssessmentIndicator } from "@prisma/client";
 
 function mapAttendanceLabel(status: AttendanceStatus) {
   const labels: Record<AttendanceStatus, string> = {
     PRESENT: "Hadir",
     SICK: "Sakit",
-    PERMIT: "Izin",
+    PERMITTED: "Izin",
     ABSENT: "Alpa",
   };
   return labels[status];
@@ -20,50 +20,107 @@ function mapInvoiceLabel(status: InvoiceStatus) {
   return labels[status];
 }
 
+function mapAssessmentLabel(indicator: AssessmentIndicator) {
+  const labels: Record<AssessmentIndicator, string> = {
+    BB: "Belum Berkembang",
+    MB: "Mulai Berkembang",
+    BSH: "Berkembang Sesuai Harapan",
+    BSB: "Berkembang Sangat Baik",
+  };
+  return labels[indicator];
+}
+
 export async function getDashboardStats() {
   try {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
     const [
-      students,
-      admissions,
-      invoices,
+      totalStudents,
+      activeStudents,
+      pendingAdmissions,
+      totalInvoices,
       unpaidInvoices,
       attendanceToday,
+      absentToday,
       reports,
+      monthlyPaidInvoices,
+      monthlyRevenue,
+      totalTeachers,
+      totalClasses,
     ] = await Promise.all([
       prisma.student.count(),
+      prisma.student.count({ where: { status: "ACTIVE" } }),
       prisma.admission.count({ where: { status: "PENDING" } }),
       prisma.invoice.count(),
       prisma.invoice.count({
         where: { status: { in: ["UNPAID", "PARTIAL"] } },
       }),
       prisma.attendance.count({
+        where: { date: { gte: todayStart, lt: todayEnd } },
+      }),
+      prisma.attendance.count({
         where: {
-          date: {
-            gte: new Date(new Date().setHours(0, 0, 0, 0)),
-            lt: new Date(new Date().setHours(23, 59, 59, 999)),
-          },
+          date: { gte: todayStart, lt: todayEnd },
+          status: { in: ["SICK", "PERMITTED", "ABSENT"] },
         },
       }),
       prisma.dailyReport.count(),
+      prisma.invoice.count({
+        where: {
+          status: "PAID",
+          periodMonth: currentMonth,
+          periodYear: currentYear,
+        },
+      }),
+      prisma.payment.aggregate({
+        _sum: { amount: true },
+        where: {
+          paidAt: {
+            gte: new Date(currentYear, currentMonth - 1, 1),
+            lt: new Date(currentYear, currentMonth, 1),
+          },
+        },
+      }),
+      prisma.teacher.count(),
+      prisma.classroom.count(),
     ]);
 
     return {
-      students,
-      admissions,
-      invoices,
+      totalStudents,
+      activeStudents,
+      pendingAdmissions,
+      totalInvoices,
       unpaidInvoices,
       attendanceToday,
+      absentToday,
       reports,
+      monthlyPaidInvoices,
+      monthlyRevenue: monthlyRevenue._sum.amount ?? 0,
+      totalTeachers,
+      totalClasses,
       dbReady: true,
     };
   } catch {
     return {
-      students: 0,
-      admissions: 0,
-      invoices: 0,
+      totalStudents: 0,
+      activeStudents: 0,
+      pendingAdmissions: 0,
+      totalInvoices: 0,
       unpaidInvoices: 0,
       attendanceToday: 0,
+      absentToday: 0,
       reports: 0,
+      monthlyPaidInvoices: 0,
+      monthlyRevenue: 0,
+      totalTeachers: 0,
+      totalClasses: 0,
       dbReady: false,
     };
   }
@@ -75,7 +132,7 @@ export async function getAdmissions() {
       dbReady: true,
       rows: await prisma.admission.findMany({
         orderBy: { createdAt: "desc" },
-        take: 10,
+        take: 20,
       }),
     };
   } catch {
@@ -83,12 +140,20 @@ export async function getAdmissions() {
   }
 }
 
-export async function getStudents() {
+export async function getStudents(teacherId?: string) {
   try {
     const rows = await prisma.student.findMany({
-      include: { classroom: true },
+      where: teacherId ? {
+        classroom: {
+          OR: [
+            { mainTeacherId: teacherId },
+            { coTeacherId: teacherId },
+          ]
+        }
+      } : undefined,
+      include: { classroom: true, parent: true },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 50,
     });
 
     return { dbReady: true, rows };
@@ -97,12 +162,22 @@ export async function getStudents() {
   }
 }
 
-export async function getAttendanceLogs() {
+export async function getAttendanceLogs(teacherId?: string) {
   try {
     const rows = await prisma.attendance.findMany({
+      where: teacherId ? {
+        student: {
+          classroom: {
+            OR: [
+              { mainTeacherId: teacherId },
+              { coTeacherId: teacherId },
+            ]
+          }
+        }
+      } : undefined,
       include: { student: true },
       orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-      take: 20,
+      take: 30,
     });
 
     return {
@@ -112,6 +187,7 @@ export async function getAttendanceLogs() {
         studentName: item.student.fullName,
         date: item.date,
         status: mapAttendanceLabel(item.status),
+        rawStatus: item.status,
         note: item.note,
       })),
     };
@@ -122,18 +198,34 @@ export async function getAttendanceLogs() {
 
 export async function getFinanceSnapshot() {
   try {
-    const [invoices, payments] = await Promise.all([
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    const [invoices, payments, expenses, monthlyExpenses] = await Promise.all([
       prisma.invoice.findMany({
         include: { student: true, payments: true },
         orderBy: { createdAt: "desc" },
         take: 20,
       }),
       prisma.payment.aggregate({ _sum: { amount: true } }),
+      prisma.expense.aggregate({ _sum: { amount: true } }),
+      prisma.expense.aggregate({
+        _sum: { amount: true },
+        where: {
+          date: {
+            gte: new Date(currentYear, currentMonth - 1, 1),
+            lt: new Date(currentYear, currentMonth, 1),
+          },
+        },
+      }),
     ]);
 
     return {
       dbReady: true,
       revenue: payments._sum.amount ?? 0,
+      totalExpenses: expenses._sum.amount ?? 0,
+      monthlyExpenses: monthlyExpenses._sum.amount ?? 0,
       rows: invoices.map((item) => {
         const paid = item.payments.reduce(
           (sum, payment) => sum + payment.amount,
@@ -143,29 +235,56 @@ export async function getFinanceSnapshot() {
           id: item.id,
           code: item.code,
           student: item.student.fullName,
+          category: item.category,
           period: `${item.periodMonth}/${item.periodYear}`,
           amount: item.amount,
+          fineAmount: item.fineAmount,
           dueDate: item.dueDate,
           paid,
-          remaining: Math.max(item.amount - paid, 0),
+          remaining: Math.max(item.amount + item.fineAmount - paid, 0),
           status: mapInvoiceLabel(item.status),
         };
       }),
     };
   } catch {
-    return { dbReady: false, revenue: 0, rows: [] };
+    return { dbReady: false, revenue: 0, totalExpenses: 0, monthlyExpenses: 0, rows: [] };
   }
 }
 
-export async function getReportsSnapshot() {
+export async function getExpenses() {
   try {
+    const rows = await prisma.expense.findMany({
+      orderBy: { date: "desc" },
+      take: 30,
+    });
+    return { dbReady: true, rows };
+  } catch {
+    return { dbReady: false, rows: [] };
+  }
+}
+
+export async function getReportsSnapshot(teacherId?: string) {
+  try {
+    const studentFilter = teacherId ? {
+      student: {
+        classroom: {
+          OR: [
+            { mainTeacherId: teacherId },
+            { coTeacherId: teacherId },
+          ]
+        }
+      }
+    } : undefined;
+
     const [reports, assessments] = await Promise.all([
       prisma.dailyReport.findMany({
+        where: studentFilter,
         include: { student: true },
         orderBy: { reportDate: "desc" },
         take: 12,
       }),
       prisma.assessment.findMany({
+        where: studentFilter,
         include: { student: true },
         orderBy: { createdAt: "desc" },
         take: 12,
@@ -178,18 +297,23 @@ export async function getReportsSnapshot() {
         id: item.id,
         studentName: item.student.fullName,
         date: item.reportDate,
+        meals: item.meals,
+        napDuration: item.napDuration,
+        mood: item.mood,
         activities: item.activities,
       })),
       assessments: assessments.map((item) => ({
         id: item.id,
         studentName: item.student.fullName,
         period: item.periodLabel,
-        avg: Number(
-          (
-            (item.social + item.cognitive + item.motoric + item.language) /
-            4
-          ).toFixed(1),
-        ),
+        agamaMoral: mapAssessmentLabel(item.agamaMoral),
+        fisikMotorik: mapAssessmentLabel(item.fisikMotorik),
+        kognitif: mapAssessmentLabel(item.kognitif),
+        bahasa: mapAssessmentLabel(item.bahasa),
+        sosialEmosional: mapAssessmentLabel(item.sosialEmosional),
+        seni: mapAssessmentLabel(item.seni),
+        narrative: item.narrative,
+        isPublished: item.isPublished,
       })),
     };
   } catch {
@@ -200,6 +324,10 @@ export async function getReportsSnapshot() {
 export async function getTeachers() {
   try {
     const rows = await prisma.teacher.findMany({
+      include: {
+        mainClassrooms: true,
+        coClassrooms: true,
+      },
       orderBy: { createdAt: "desc" },
       take: 50,
     });
@@ -211,19 +339,371 @@ export async function getTeachers() {
 
 export async function getGuardians() {
   try {
-    const students = await prisma.student.findMany({
-      select: { guardianName: true, guardianPhone: true },
+    const parents = await prisma.parent.findMany({
+      include: {
+        students: { select: { fullName: true } },
+      },
       orderBy: { createdAt: "desc" },
       take: 100,
     });
-    const map = new Map();
-    students.forEach((s) => {
-      const key = `${s.guardianName}||${s.guardianPhone}`;
-      if (!map.has(key))
-        map.set(key, { name: s.guardianName, phone: s.guardianPhone });
-    });
-    return { dbReady: true, rows: Array.from(map.values()) };
+
+    return {
+      dbReady: true,
+      rows: parents.map((p) => ({
+        id: p.id,
+        fatherName: p.fatherName,
+        motherName: p.motherName,
+        whatsapp: p.whatsapp,
+        phone: p.phone,
+        address: p.address,
+        children: p.students.map((s) => s.fullName),
+      })),
+    };
   } catch {
     return { dbReady: false, rows: [] };
+  }
+}
+
+export async function getClassrooms() {
+  try {
+    const rows = await prisma.classroom.findMany({
+      include: {
+        mainTeacher: true,
+        coTeacher: true,
+        _count: { select: { students: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return { dbReady: true, rows };
+  } catch {
+    return { dbReady: false, rows: [] };
+  }
+}
+
+export async function getPendingAdmissionsForDashboard() {
+  try {
+    const rows = await prisma.admission.findMany({
+      where: { status: "PENDING" },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    });
+    return { dbReady: true, rows };
+  } catch {
+    return { dbReady: false, rows: [] };
+  }
+}
+
+export async function getArrearsStudents() {
+  try {
+    const rows = await prisma.invoice.findMany({
+      where: { status: { in: ["UNPAID", "PARTIAL"] } },
+      include: {
+        student: { select: { fullName: true, nickName: true } },
+        payments: { select: { amount: true } },
+      },
+      orderBy: { dueDate: "asc" },
+      take: 20,
+    });
+
+    return {
+      dbReady: true,
+      rows: rows.map((inv) => {
+        const paid = inv.payments.reduce((s, p) => s + p.amount, 0);
+        return {
+          id: inv.id,
+          code: inv.code,
+          studentName: inv.student.fullName,
+          nickName: inv.student.nickName,
+          category: inv.category,
+          period: `${inv.periodMonth}/${inv.periodYear}`,
+          amount: inv.amount + inv.fineAmount,
+          paid,
+          remaining: Math.max(inv.amount + inv.fineAmount - paid, 0),
+          dueDate: inv.dueDate,
+        };
+      }),
+    };
+  } catch {
+    return { dbReady: false, rows: [] };
+  }
+}
+
+export async function getLessonPlans() {
+  try {
+    const rows = await prisma.lessonPlan.findMany({
+      include: { teacher: true },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+    return { dbReady: true, rows };
+  } catch {
+    return { dbReady: false, rows: [] };
+  }
+}
+
+// Single Entity Fetches for Profile Pages
+export async function getStudentById(id: string) {
+  try {
+    const student = await prisma.student.findUnique({
+      where: { id },
+      include: {
+        parent: true,
+        classroom: true,
+        attendances: { orderBy: { date: 'desc' }, take: 10 },
+        assessments: { orderBy: { createdAt: 'desc' }, take: 5 },
+        invoices: { orderBy: { createdAt: 'desc' }, take: 5 },
+      }
+    });
+    return student;
+  } catch (err) {
+    console.error("Failed to fetch student", err);
+    return null;
+  }
+}
+
+export async function getTeacherById(id: string) {
+  try {
+    const teacher = await prisma.teacher.findUnique({
+      where: { id },
+      include: {
+        mainClassrooms: true,
+        coClassrooms: true,
+        lessonPlans: { orderBy: { createdAt: 'desc' }, take: 5 },
+      }
+    });
+    return teacher;
+  } catch (err) {
+    console.error("Failed to fetch teacher", err);
+    return null;
+  }
+}
+
+export async function getParentById(id: string) {
+  try {
+    const parent = await prisma.parent.findUnique({
+      where: { id },
+      include: {
+        students: { include: { classroom: true } },
+      }
+    });
+    return parent;
+  } catch (err) {
+    console.error("Failed to fetch parent", err);
+    return null;
+  }
+}
+
+
+export async function getParentDashboard(parentId: string) {
+  try {
+    const students = await prisma.student.findMany({
+      where: { parentId },
+      include: {
+        classroom: true,
+        invoices: {
+          where: { status: { in: ["UNPAID", "PARTIAL"] } },
+          include: { payments: true }
+        },
+        attendances: {
+          orderBy: { date: "desc" },
+          take: 5
+        },
+        reports: {
+          orderBy: { reportDate: "desc" },
+          take: 5
+        }
+      }
+    });
+
+    return {
+      dbReady: true,
+      students: students.map(s => ({
+        id: s.id,
+        fullName: s.fullName,
+        nickName: s.nickName,
+        classroom: s.classroom?.name || "Belum ada kelas",
+        invoices: s.invoices.map((inv: any) => {
+          const paid = inv.payments.reduce((sum: number, p: any) => sum + p.amount, 0);
+          return {
+            id: inv.id,
+            code: inv.code,
+            category: inv.category,
+            period: `${inv.periodMonth}/${inv.periodYear}`,
+            amount: inv.amount + inv.fineAmount,
+            paid,
+            remaining: Math.max(inv.amount + inv.fineAmount - paid, 0),
+            dueDate: inv.dueDate,
+          }
+        }),
+        attendances: s.attendances,
+        dailyReports: s.reports,
+      }))
+    };
+  } catch (error) {
+    return { dbReady: false, students: [] };
+  }
+}
+
+export async function getTeacherAttendances() {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const rows = await prisma.teacherAttendance.findMany({
+      where: {
+        date: {
+          gte: today,
+          lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
+        }
+      },
+      include: { teacher: true },
+      orderBy: { checkIn: "desc" }
+    });
+
+    return { dbReady: true, rows };
+  } catch (error) {
+    return { dbReady: false, rows: [] };
+  }
+}
+
+export async function getStudentsForRaport(teacherId?: string) {
+  try {
+    const whereClause: any = { status: "ACTIVE" };
+    if (teacherId) {
+      // Find classrooms where teacher is main or co-teacher
+      const classrooms = await prisma.classroom.findMany({
+        where: {
+          OR: [
+            { mainTeacherId: teacherId },
+            { coTeacherId: teacherId }
+          ]
+        },
+        select: { id: true }
+      });
+      const classroomIds = classrooms.map(c => c.id);
+      if (classroomIds.length > 0) {
+        whereClause.classroomId = { in: classroomIds };
+      } else {
+        // Teacher has no classrooms, return empty
+        return { dbReady: true, students: [] };
+      }
+    }
+
+    const students = await prisma.student.findMany({
+      where: whereClause,
+      include: {
+        classroom: true,
+        assessments: true, // to know how many assessments they have
+      },
+      orderBy: { fullName: "asc" }
+    });
+
+    return { dbReady: true, students };
+  } catch (error) {
+    return { dbReady: false, students: [] };
+  }
+}
+
+export async function getStudentAssessments(studentId: string) {
+  try {
+    const assessments = await prisma.assessment.findMany({
+      where: { 
+        studentId,
+        isPublished: true
+      },
+      orderBy: { createdAt: "desc" }
+    });
+    return { dbReady: true, assessments };
+  } catch (error) {
+    return { dbReady: false, assessments: [] };
+  }
+}
+
+export async function getGuruDashboardStats(teacherId: string) {
+  try {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // 1. Get classes
+    const classes = await prisma.classroom.findMany({
+      where: {
+        OR: [
+          { mainTeacherId: teacherId },
+          { coTeacherId: teacherId },
+        ],
+      },
+      include: {
+        students: {
+          select: {
+            id: true,
+            attendances: {
+              where: {
+                date: {
+                  gte: todayStart,
+                  lte: todayEnd,
+                }
+              }
+            },
+            reports: {
+              where: {
+                reportDate: {
+                  gte: todayStart,
+                  lte: todayEnd,
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    let totalStudents = 0;
+    let presentToday = 0;
+    let absentToday = 0; // Sick, Permitted, Absent
+    let unrecordedAttendance = 0;
+    let filledReports = 0;
+    
+    classes.forEach(cls => {
+      totalStudents += cls.students.length;
+      
+      cls.students.forEach(std => {
+        const att = std.attendances[0];
+        if (!att) {
+          unrecordedAttendance++;
+        } else if (att.status === "PRESENT") {
+          presentToday++;
+        } else {
+          absentToday++;
+        }
+
+        const rep = std.reports[0];
+        if (rep) filledReports++;
+      });
+    });
+
+    const pendingReports = totalStudents - filledReports;
+
+    return {
+      classesCount: classes.length,
+      totalStudents,
+      presentToday,
+      absentToday,
+      unrecordedAttendance,
+      filledReports,
+      pendingReports
+    };
+  } catch (error) {
+    console.error("Failed to fetch guru stats:", error);
+    return {
+      classesCount: 0,
+      totalStudents: 0,
+      presentToday: 0,
+      absentToday: 0,
+      unrecordedAttendance: 0,
+      filledReports: 0,
+      pendingReports: 0,
+    };
   }
 }

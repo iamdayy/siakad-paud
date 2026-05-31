@@ -10,83 +10,22 @@ import {
   verifySessionToken,
 } from "@/lib/session";
 import type { User } from "@prisma/client";
-import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
+import { compareSync, hashSync } from "bcryptjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-type DemoUserSeed = {
-  username: string;
-  password: string;
-  displayName: string;
-  role: AppRole;
-};
-
-const demoUsers: DemoUserSeed[] = [
-  {
-    username: "admin",
-    password: "admin123",
-    displayName: "Admin Sekolah",
-    role: "ADMIN",
-  },
-  { username: "tu", password: "tu123", displayName: "Tata Usaha", role: "TU" },
-  {
-    username: "guru",
-    password: "guru123",
-    displayName: "Guru Kelas",
-    role: "GURU",
-  },
-  {
-    username: "kepsek",
-    password: "kepsek123",
-    displayName: "Kepala Sekolah",
-    role: "KEPALA_SEKOLAH",
-  },
-  {
-    username: "orangtua",
-    password: "ortu123",
-    displayName: "Orang Tua",
-    role: "ORANG_TUA",
-  },
-];
-
-function hashPassword(password: string, salt: string) {
-  return scryptSync(password, salt, 32).toString("hex");
+export function hashPassword(password: string) {
+  return hashSync(password, 10);
 }
 
-function createPasswordRecord(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  return {
-    passwordSalt: salt,
-    passwordHash: hashPassword(password, salt),
-  };
-}
-
-async function ensureDemoUsers() {
-  const existingCount = await prisma.user.count();
-  if (existingCount > 0) return;
-
-  await prisma.user.createMany({
-    data: demoUsers.map((demoUser) => ({
-      username: demoUser.username,
-      displayName: demoUser.displayName,
-      role: demoUser.role,
-      ...createPasswordRecord(demoUser.password),
-    })),
-  });
-}
-
-function verifyPassword(password: string, salt: string, passwordHash: string) {
-  const derived = scryptSync(password, salt, 32);
-  return timingSafeEqual(derived, Buffer.from(passwordHash, "hex"));
+export function verifyPassword(password: string, passwordHash: string) {
+  return compareSync(password, passwordHash);
 }
 
 export async function authenticateUser(username: string, password: string) {
-  await ensureDemoUsers();
-
   const user = await prisma.user.findUnique({ where: { username } });
   if (!user || !user.isActive) return null;
-  if (!verifyPassword(password, user.passwordSalt, user.passwordHash))
-    return null;
+  if (!verifyPassword(password, user.passwordHash)) return null;
 
   await prisma.user.update({
     where: { id: user.id },
