@@ -13,6 +13,10 @@ export async function middleware(request: NextRequest) {
     pathname === "/login" ||
     pathname.startsWith("/ppdb-public") ||
     pathname.startsWith("/api/ppdb/submit") ||
+    pathname.startsWith("/api/ppdb/upload-url") ||
+    pathname.startsWith("/midtrans/success") ||
+    pathname.startsWith("/midtrans/failure") ||
+    pathname.startsWith("/midtrans/error") ||
     pathname.startsWith("/api/midtrans/webhook")
   ) {
     return NextResponse.next();
