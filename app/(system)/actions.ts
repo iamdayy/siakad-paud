@@ -1,6 +1,6 @@
 "use server";
 
-import { requireActionAccess } from "@/lib/auth";
+import { hashPassword, requireActionAccess } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   AttendanceStatus,
@@ -30,7 +30,6 @@ function safeInt(value: FormDataEntryValue | null, fallback = 0) {
   return Number.isFinite(n) ? Math.round(n) : fallback;
 }
 
-// ─── Mock WhatsApp Notification ────────────────────────────────────────────────
 
 async function sendWhatsAppNotification(
   phone: string,
@@ -259,7 +258,7 @@ export async function approveAdmission(formData: FormData) {
       // Generate Uang Pangkal Invoice (Default Amount: 1,500,000 for PAUD)
       const now = new Date();
       const code = `INV-UP-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-      
+
       await tx.invoice.create({
         data: {
           code,
@@ -272,10 +271,28 @@ export async function approveAdmission(formData: FormData) {
         },
       });
 
+      // Create User Parent if not exists
+      const parentUser = await tx.user.findUnique({
+        where: { username: admission.whatsapp },
+      });
+
+      if (!parentUser) {
+        const passwordHash = await hashPassword(admission.whatsapp);
+        await tx.user.create({
+          data: {
+            username: admission.whatsapp,
+            passwordHash,
+            displayName: admission.fatherName || admission.motherName || "Orang Tua",
+            role: "ORANG_TUA",
+            parentId: parent.id,
+          },
+        });
+      }
+
       // Send notification to parent
       await sendWhatsAppNotification(
         admission.whatsapp,
-        `Selamat! Pendaftaran ananda ${admission.childName} telah disetujui. Silakan masuk ke dashboard untuk melihat dan melunasi tagihan Uang Pangkal. Nomor Induk Siswa (NIS) akan otomatis terbit setelah tagihan lunas.`,
+        `Selamat! Pendaftaran ananda ${admission.childName} telah disetujui. Silakan masuk ke dashboard dengan menggunakan username ${admission.whatsapp} dan password ${admission.whatsapp} untuk melihat dan melunasi tagihan Uang Pangkal. Nomor Induk Siswa (NIS) akan otomatis terbit setelah tagihan lunas.`,
       );
     });
 
@@ -451,7 +468,7 @@ export async function updateSystemConfig(formData: FormData) {
 
 export async function teacherCheckIn(formData: FormData) {
   const user = await requireActionAccess(["ADMIN", "TU", "GURU", "KEPALA_SEKOLAH"]);
-  
+
   // Identify which teacher this is
   const teacherId = user.teacherId;
   if (!teacherId) return;
@@ -493,10 +510,10 @@ export async function teacherCheckIn(formData: FormData) {
 
 export async function saveAssessment(formData: FormData) {
   await requireActionAccess(["ADMIN", "TU", "GURU", "KEPALA_SEKOLAH"]);
-  
+
   const studentId = formData.get("studentId") as string;
   const periodLabel = formData.get("periodLabel") as string;
-  
+
   if (!studentId || !periodLabel) return;
 
   const data = {
@@ -506,7 +523,7 @@ export async function saveAssessment(formData: FormData) {
     bahasa: formData.get("bahasa") as any,
     sosialEmosional: formData.get("sosialEmosional") as any,
     seni: formData.get("seni") as any,
-    
+
     narasiAgamaMoral: formData.get("narasiAgamaMoral") as string,
     narasiFisikMotorik: formData.get("narasiFisikMotorik") as string,
     narasiKognitif: formData.get("narasiKognitif") as string,
@@ -543,7 +560,7 @@ export async function saveAssessment(formData: FormData) {
 
 export async function teacherCheckOut(formData: FormData) {
   const user = await requireActionAccess(["ADMIN", "TU", "GURU", "KEPALA_SEKOLAH"]);
-  
+
   const teacherId = user.teacherId;
   if (!teacherId) return;
 
@@ -778,7 +795,7 @@ export async function recordPayment(formData: FormData) {
         // Find last NIS in the same year to generate sequential number
         const currentYear = new Date().getFullYear();
         const yearPrefix = currentYear.toString();
-        
+
         const lastStudent = await tx.student.findFirst({
           where: { nis: { startsWith: yearPrefix } },
           orderBy: { nis: 'desc' }

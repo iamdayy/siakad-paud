@@ -99,6 +99,11 @@ export default function PpdbFormClient({ year }: { year: string }) {
   async function onSubmit(data: PpdbFormData) {
     setSubmitError(null);
     setLoading(true);
+    if (!selectedFiles.length) {
+      setSubmitError("Harap unggah minimal 1 dokumen.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const uploadedKeys: string[] = [];
@@ -163,7 +168,7 @@ export default function PpdbFormClient({ year }: { year: string }) {
 
   return (
     <section className="container mx-auto max-w-4xl px-4 sm:px-6 relative z-10">
-      
+
       {/* Header Info */}
       <div className="text-center mb-8">
         <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
@@ -173,7 +178,7 @@ export default function PpdbFormClient({ year }: { year: string }) {
       </div>
 
       <div className="grid md:grid-cols-[240px_1fr] gap-8 bg-card rounded-3xl border shadow-xl shadow-primary/5 overflow-hidden">
-        
+
         {/* Left Sidebar: Steps Progress */}
         <div className="bg-muted/40 p-6 md:border-r border-b md:border-b-0 hidden md:block">
           <div className="sticky top-24 space-y-8">
@@ -187,10 +192,9 @@ export default function PpdbFormClient({ year }: { year: string }) {
                     <div className={`absolute top-10 left-[19px] bottom-[-24px] w-[2px] transition-colors duration-300 ${isCompleted ? 'bg-primary' : 'bg-border'}`} />
                   )}
                   <div className={`flex items-start gap-4 transition-all duration-300 ${isActive ? 'opacity-100' : 'opacity-60'}`}>
-                    <div className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 bg-background transition-colors duration-300 ${
-                      isCompleted ? 'border-primary bg-primary text-primary-foreground' :
-                      isActive ? 'border-primary text-primary shadow-[0_0_15px_rgba(var(--primary),0.3)]' : 'border-muted-foreground text-muted-foreground'
-                    }`}>
+                    <div className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 bg-background transition-colors duration-300 ${isCompleted ? 'border-primary bg-primary text-primary-foreground' :
+                        isActive ? 'border-primary text-primary shadow-[0_0_15px_rgba(var(--primary),0.3)]' : 'border-muted-foreground text-muted-foreground'
+                      }`}>
                       {isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
                     </div>
                     <div className="pt-2">
@@ -215,24 +219,23 @@ export default function PpdbFormClient({ year }: { year: string }) {
             {STEPS.map((s) => (
               <div
                 key={s.id}
-                className={`relative flex h-8 w-8 items-center justify-center rounded-full border-2 bg-background text-sm font-bold transition-all duration-300 ${
-                  step > s.id ? "border-primary bg-primary text-primary-foreground" :
-                  step === s.id ? "border-primary text-primary ring-4 ring-primary/20" : "border-border text-muted-foreground"
-                }`}
+                className={`relative flex h-8 w-8 items-center justify-center rounded-full border-2 bg-background text-sm font-bold transition-all duration-300 ${step > s.id ? "border-primary bg-primary text-primary-foreground" :
+                    step === s.id ? "border-primary text-primary ring-4 ring-primary/20" : "border-border text-muted-foreground"
+                  }`}
               >
                 {step > s.id ? <CheckCircle2 className="h-4 w-4" /> : s.id}
               </div>
             ))}
           </div>
           <div className="text-center mt-4">
-            <h3 className="font-semibold text-primary">Langkah {step}: {STEPS[step-1].title}</h3>
+            <h3 className="font-semibold text-primary">Langkah {step}: {STEPS[step - 1].title}</h3>
           </div>
         </div>
 
         {/* Form Content */}
         <div className="p-6 md:p-8">
           <form onSubmit={handleSubmit(onSubmit)}>
-            
+
             {/* STEP 1: Data Anak */}
             <div className={`transition-all duration-500 ${step === 1 ? "opacity-100 translate-x-0" : "opacity-0 hidden translate-x-8"}`}>
               <div className="mb-6">
@@ -250,7 +253,7 @@ export default function PpdbFormClient({ year }: { year: string }) {
                   <FieldLabel htmlFor="nickName">Nama Panggilan</FieldLabel>
                   <Input id="nickName" {...register("nickName")} placeholder="Nama panggilan anak" className="h-11" />
                 </Field>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <Field>
                     <FieldLabel htmlFor="birthPlace">Tempat Lahir</FieldLabel>
@@ -322,7 +325,7 @@ export default function PpdbFormClient({ year }: { year: string }) {
                     <Input id="fatherJob" {...register("fatherJob")} className="h-11 bg-background" />
                   </Field>
                 </div>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 p-5 bg-muted/20 rounded-xl border">
                   <Field>
                     <FieldLabel htmlFor="motherName">Nama Ibu</FieldLabel>
@@ -377,7 +380,7 @@ export default function PpdbFormClient({ year }: { year: string }) {
 
                 <Field>
                   <FieldLabel className="text-base">Dokumen Pendukung <span className="font-normal text-muted-foreground text-sm">(Maks. {MAX_FILES} File)</span></FieldLabel>
-                  <div 
+                  <div
                     className="mt-2 group rounded-2xl border-2 border-dashed border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors p-8 text-center cursor-pointer relative"
                     onClick={() => fileInputRef.current?.click()}
                   >
@@ -389,7 +392,7 @@ export default function PpdbFormClient({ year }: { year: string }) {
                     </div>
                     <p className="text-foreground font-medium text-lg">Pilih atau Tarik File ke Sini</p>
                     <p className="text-sm text-muted-foreground mt-2">
-                      Format didukung: JPG, PNG, PDF. <br/>Maksimal {Math.round(MAX_BYTES / 1024 / 1024)}MB per file.
+                      Format didukung: JPG, PNG, PDF. <br />Maksimal {Math.round(MAX_BYTES / 1024 / 1024)}MB per file.
                     </p>
                     <input
                       id="documents"
@@ -401,17 +404,17 @@ export default function PpdbFormClient({ year }: { year: string }) {
                       onChange={(ev) => {
                         const files = ev.currentTarget.files;
                         if (!files) return;
-                        
+
                         // Combine existing valid files with new ones up to MAX_FILES
                         const newArray = Array.from(files);
                         let totalFiles = [...selectedFiles];
-                        
+
                         for (const f of newArray) {
                           if (totalFiles.length >= MAX_FILES) break;
                           let err: string | undefined;
                           if (f.size > MAX_BYTES) err = `Maks. ${Math.round(MAX_BYTES / 1024 / 1024)}MB`;
                           if (!allowedTypes.some((rx) => rx.test(f.type))) err = `Format tidak didukung`;
-                          
+
                           // Avoid duplicates by name
                           if (!totalFiles.some(tf => tf.file.name === f.name)) {
                             totalFiles.push({ file: f, progress: 0, error: err });
@@ -498,7 +501,7 @@ export default function PpdbFormClient({ year }: { year: string }) {
                 </Button>
               )}
             </div>
-            
+
           </form>
         </div>
       </div>
