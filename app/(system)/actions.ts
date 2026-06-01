@@ -31,7 +31,7 @@ function safeInt(value: FormDataEntryValue | null, fallback = 0) {
 }
 
 
-async function sendWhatsAppNotification(
+export async function sendWhatsAppNotification(
   phone: string,
   message: string,
 ) {
@@ -1170,7 +1170,7 @@ export async function createAssessment(formData: FormData) {
       where: { id: studentId },
       include: { classroom: true }
     });
-    
+
     const className = student?.classroom?.name || null;
 
     await prisma.assessment.upsert({
