@@ -17,21 +17,22 @@ export const PROTECTED_ROUTE_RULES: Array<{
   path: string;
   roles: readonly AppRole[];
 }> = [
-  {
-    path: "/dashboard",
-    roles: ["ADMIN", "TU", "GURU", "KEPALA_SEKOLAH"], // Parents have their own portal
-  },
-  { path: "/parent", roles: ["ORANG_TUA"] },
-  { path: "/ppdb", roles: ["ADMIN", "TU"] },
-  { path: "/siswa", roles: ["ADMIN", "TU"] },
-  { path: "/kelas", roles: ["ADMIN", "TU", "KEPALA_SEKOLAH"] },
-  { path: "/presensi", roles: ["ADMIN", "TU", "GURU"] },
-  { path: "/keuangan", roles: ["ADMIN", "TU"] },
-  { path: "/laporan", roles: ["ADMIN", "TU", "GURU", "KEPALA_SEKOLAH"] },
-  { path: "/guru", roles: ["ADMIN", "TU"] },
-  { path: "/orangtua", roles: ["ADMIN", "TU", "KEPALA_SEKOLAH"] },
-  { path: "/admin/pengaturan", roles: ["ADMIN", "KEPALA_SEKOLAH"] },
-];
+    {
+      path: "/dashboard",
+      roles: ["ADMIN", "TU", "GURU", "KEPALA_SEKOLAH"], // Parents have their own portal
+    },
+    { path: "/parent", roles: ["ORANG_TUA"] },
+    { path: "/ppdb", roles: ["ADMIN", "TU"] },
+    { path: "/siswa", roles: ["ADMIN", "TU"] },
+    { path: "/kelas", roles: ["ADMIN", "TU", "KEPALA_SEKOLAH"] },
+    { path: "/presensi", roles: ["ADMIN", "TU", "GURU"] },
+    { path: "/keuangan", roles: ["ADMIN", "TU"] },
+    { path: "/laporan/lesson-plan", roles: ["ADMIN", "TU", "KEPALA_SEKOLAH"] },
+    { path: "/laporan", roles: ["ADMIN", "TU", "GURU", "KEPALA_SEKOLAH"] },
+    { path: "/guru", roles: ["ADMIN", "TU"] },
+    { path: "/orangtua", roles: ["ADMIN", "TU", "KEPALA_SEKOLAH"] },
+    { path: "/admin/pengaturan", roles: ["ADMIN", "KEPALA_SEKOLAH"] },
+  ];
 
 function getSecretKey() {
   const secret = process.env.AUTH_SECRET ?? "siakad-paud-dev-secret-change-me";
@@ -78,12 +79,18 @@ export function sanitizeNextPath(
 }
 
 export function canAccessPath(role: AppRole, pathname: string) {
-  // Find the exact match or prefix match
-  return PROTECTED_ROUTE_RULES.some(
-    (rule) =>
-      (pathname === rule.path || pathname.startsWith(`${rule.path}/`)) &&
-      rule.roles.includes(role),
+  // Sort rules by path length descending so more specific paths match first
+  const sortedRules = [...PROTECTED_ROUTE_RULES].sort((a, b) => b.path.length - a.path.length);
+  
+  const matchedRule = sortedRules.find(
+    (rule) => pathname === rule.path || pathname.startsWith(`${rule.path}/`)
   );
+
+  if (matchedRule) {
+    return matchedRule.roles.includes(role);
+  }
+  
+  return false;
 }
 
 export function getAllowedRoutes(role: AppRole) {

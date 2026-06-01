@@ -14,6 +14,9 @@ async function main() {
   await prisma.attendance.deleteMany();
   await prisma.teacherAttendance.deleteMany();
   await prisma.lessonPlan.deleteMany();
+  await prisma.classSchedule.deleteMany();
+  await prisma.announcement.deleteMany();
+  await prisma.systemSetting.deleteMany();
 
   await prisma.student.updateMany({ data: { classroomId: null } });
   await prisma.classroom.deleteMany();
@@ -242,6 +245,133 @@ async function main() {
     paidAt: new Date(today.getFullYear(), today.getMonth(), faker.number.int({ min: 1, max: 10 })),
   }));
   await prisma.payment.createMany({ data: paymentsData });
+
+  // 7. Data Pendaftaran (Admission)
+  console.log("Membuat Data Pendaftaran...");
+  await prisma.admission.create({
+    data: {
+      childName: "Budi Santoso",
+      nickName: "Budi",
+      gender: "Laki-laki",
+      birthPlace: "Bandung",
+      birthDate: new Date("2021-05-10"),
+      siblingCount: 0,
+      
+      fatherName: "Andi Santoso",
+      motherName: "Siti Rahmawati",
+      parentNik: "3201010101010101",
+      fatherJob: "Pegawai Swasta",
+      motherJob: "Ibu Rumah Tangga",
+      
+      whatsapp: "081234567890",
+      address: "Jl. Merdeka No. 10",
+      
+      status: RegistrationStatus.PENDING,
+    }
+  });
+
+  // 8. Data Jadwal Kelas (ClassSchedule)
+  console.log("Membuat Jadwal Kelas...");
+  const schedulesData = [];
+  for (const room of classrooms) {
+    for (let day = 1; day <= 5; day++) { // Senin - Jumat
+      schedulesData.push(
+        { classroomId: room.id, dayOfWeek: day, startTime: "07:30", endTime: "08:00", activity: "Penyambutan Anak", location: "Halaman Depan" },
+        { classroomId: room.id, dayOfWeek: day, startTime: "08:00", endTime: "09:00", activity: "Kegiatan Inti (RPPH)", location: "Ruang Kelas" },
+        { classroomId: room.id, dayOfWeek: day, startTime: "09:00", endTime: "10:00", activity: "Makan & Istirahat", location: "Ruang Makan" }
+      );
+    }
+  }
+  await prisma.classSchedule.createMany({ data: schedulesData });
+
+  // 8. Data Assessment
+  console.log("Membuat Data Assessment...");
+  const assessmentsData = [];
+  for (const student of createdStudents) {
+    assessmentsData.push({
+      studentId: student.id,
+      periodLabel: "Semester Ganjil 2025/2026",
+      agamaMoral: faker.helpers.arrayElement([AssessmentIndicator.MB, AssessmentIndicator.BSH, AssessmentIndicator.BSB]),
+      fisikMotorik: faker.helpers.arrayElement([AssessmentIndicator.MB, AssessmentIndicator.BSH, AssessmentIndicator.BSB]),
+      kognitif: faker.helpers.arrayElement([AssessmentIndicator.MB, AssessmentIndicator.BSH, AssessmentIndicator.BSB]),
+      bahasa: faker.helpers.arrayElement([AssessmentIndicator.MB, AssessmentIndicator.BSH, AssessmentIndicator.BSB]),
+      sosialEmosional: faker.helpers.arrayElement([AssessmentIndicator.MB, AssessmentIndicator.BSH, AssessmentIndicator.BSB]),
+      seni: faker.helpers.arrayElement([AssessmentIndicator.MB, AssessmentIndicator.BSH, AssessmentIndicator.BSB]),
+      narrative: "Anak menunjukkan perkembangan yang luar biasa, bersemangat saat belajar, dan mudah bergaul.",
+      isPublished: true,
+    });
+  }
+  await prisma.assessment.createMany({ data: assessmentsData });
+
+  // 9. Data Pengeluaran (Expense)
+  console.log("Membuat Data Pengeluaran...");
+  const expensesData = [];
+  for (let i = 0; i < 10; i++) {
+    expensesData.push({
+      code: `EXP-2505-${(i + 1).toString().padStart(4, '0')}`,
+      category: faker.helpers.arrayElement([ExpenseCategory.OPERASIONAL, ExpenseCategory.GAJI, ExpenseCategory.PEMELIHARAAN, ExpenseCategory.LAINNYA]),
+      amount: faker.number.int({ min: 100000, max: 2000000 }),
+      date: faker.date.recent({ days: 30 }),
+      description: faker.helpers.arrayElement(["Pembelian ATK", "Pembayaran Listrik", "Pembelian APE", "Konsumsi Rapat", "Perbaikan AC"]),
+    });
+  }
+  await prisma.expense.createMany({ data: expensesData });
+
+  // 10. Data Pengumuman (Announcement)
+  console.log("Membuat Data Pengumuman...");
+  await prisma.announcement.create({
+    data: {
+      title: "Libur Nasional Maulid Nabi",
+      content: "Diberitahukan kepada seluruh orang tua siswa, pada hari Jumat sekolah akan diliburkan dalam rangka memperingati Maulid Nabi Muhammad SAW. Anak-anak masuk kembali hari Senin.",
+      targetRole: "ALL",
+    }
+  });
+  await prisma.announcement.create({
+    data: {
+      title: "Persiapan Rapat Guru",
+      content: "Rapat evaluasi kurikulum bulan ini akan dilaksanakan esok hari jam 13:00.",
+      targetRole: "TEACHER",
+    }
+  });
+
+  // 11. System Setting
+  console.log("Menyusun System Setting...");
+  await prisma.systemSetting.create({
+    data: {
+      key: "SCHOOL_NAME",
+      value: "PAUD & TK Bintang Kecil",
+    }
+  });
+
+  // 12. Teacher Attendance & Lesson Plan
+  console.log("Membuat Teacher Attendance & Lesson Plan...");
+  const teacherAttendancesData = [];
+  for (let i = 0; i < 8; i++) {
+    const teacherId = classrooms[i].mainTeacherId;
+    if (!teacherId) continue;
+    teacherAttendancesData.push({
+      teacherId,
+      date: today,
+      status: AttendanceStatus.PRESENT,
+      checkIn: new Date(new Date(today).setHours(6, 30, 0, 0)),
+      checkOut: new Date(new Date(today).setHours(15, 0, 0, 0)),
+    });
+  }
+  await prisma.teacherAttendance.createMany({ data: teacherAttendancesData });
+
+  const lessonPlansData = [];
+  for (let i = 0; i < 8; i++) {
+    const teacherId = classrooms[i].mainTeacherId;
+    if (!teacherId) continue;
+    lessonPlansData.push({
+      teacherId,
+      title: "RPPH Tema Lingkunganku",
+      type: "RPPH",
+      weekDate: today,
+      content: "Kegiatan berfokus pada pengenalan anggota keluarga dan lingkungan rumah. Menggunakan metode bermain peran.",
+    });
+  }
+  await prisma.lessonPlan.createMany({ data: lessonPlansData });
 
   console.log("✅ SEEDING 100 SISWA SELESAI!");
 }

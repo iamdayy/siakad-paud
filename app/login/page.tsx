@@ -9,13 +9,14 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LogIn, Sparkles } from "lucide-react";
+import { ArrowLeft, LogIn, Sparkles } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { loginAction } from "../auth/actions";
 import { getCurrentUser } from "@/lib/auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import Link from "next/link";
 
 async function LoginForm({
   searchParams,
@@ -87,6 +88,11 @@ async function LoginForm({
         <p className="text-[11px] text-muted-foreground text-center">
           Hubungi Admin jika Anda lupa kredensial akun.
         </p>
+        <Button asChild variant="outline" className="w-full">
+          <Link href="/">
+            <ArrowLeft className="h-4 w-4" /> Kembali
+          </Link>
+        </Button>
       </CardFooter>
     </form>
   );

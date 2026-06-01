@@ -243,8 +243,8 @@ export async function POST(req: Request) {
         const pName = fatherName || motherName || "Bapak/Ibu";
         await sendConfirmationEmail(
           parentEmail,
-          "Pendaftaran PPDB diterima",
-          `Terima kasih, ${pName}. Pendaftaran ananda ${childName} telah kami terima dan akan segera diproses oleh tim admin.`,
+          `[PAUD/TK] Konfirmasi Pendaftaran Ananda ${childName}`,
+          `*KONFIRMASI PENDAFTARAN SISWA BARU*\n\nYth. Bapak/Ibu ${pName},\n\nSemoga pesan ini menjumpai Bapak/Ibu dalam keadaan sehat.\n\nKami mengonfirmasi bahwa formulir pendaftaran atas nama Ananda *${childName}* telah berhasil kami terima dalam sistem Penerimaan Peserta Didik Baru (PPDB).\n\nSaat ini, tim panitia PPDB sedang melakukan verifikasi kelengkapan administrasi. Kami akan menginformasikan status pendaftaran Bapak/Ibu melalui WhatsApp atau Email secepatnya.\n\nTerima kasih atas kepercayaan Bapak/Ibu memilih PAUD/TK kami sebagai mitra pendidikan Ananda.\n\nHormat kami,\nPanitia PPDB PAUD/TK`,
         );
       } catch (e) {
         console.error("sendConfirmationEmail failed", e);

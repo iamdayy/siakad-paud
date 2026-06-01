@@ -292,7 +292,7 @@ export async function approveAdmission(formData: FormData) {
       // Send notification to parent
       await sendWhatsAppNotification(
         admission.whatsapp,
-        `Selamat! Pendaftaran ananda ${admission.childName} telah disetujui. Silakan masuk ke dashboard dengan menggunakan username ${admission.whatsapp} dan password ${admission.whatsapp} untuk melihat dan melunasi tagihan Uang Pangkal. Nomor Induk Siswa (NIS) akan otomatis terbit setelah tagihan lunas.`,
+        `*PEMBERITAHUAN PENERIMAAN SISWA BARU*\n\nYth. Bapak/Ibu Orang Tua dari Ananda ${admission.childName},\n\nSelamat! Kami informasikan bahwa pendaftaran Ananda telah *DISETUJUI*.\n\nUntuk langkah selanjutnya, silakan masuk ke Portal Orang Tua menggunakan kredensial berikut:\n👤 Username: ${admission.whatsapp}\n🔑 Password: ${admission.whatsapp}\n\nMohon segera melunasi tagihan Uang Pangkal yang tersedia di portal. Nomor Induk Siswa (NIS) resmi Ananda akan diterbitkan secara otomatis setelah pembayaran terverifikasi.\n\nTerima kasih atas kepercayaan Bapak/Ibu kepada institusi kami.\n\nHormat kami,\nManajemen PAUD/TK`,
       );
     });
 
@@ -326,7 +326,7 @@ export async function rejectAdmission(formData: FormData) {
     if (admission) {
       await sendWhatsAppNotification(
         admission.whatsapp,
-        `Mohon maaf, pendaftaran ${admission.childName} belum dapat diterima. Alasan: ${reason || "Tidak disebutkan"}. Silakan hubungi pihak sekolah untuk informasi lebih lanjut.`,
+        `*PEMBERITAHUAN PENERIMAAN SISWA BARU*\n\nYth. Bapak/Ibu Orang Tua dari Ananda ${admission.childName},\n\nTerima kasih atas minat dan kepercayaan Bapak/Ibu untuk mendaftarkan Ananda di institusi kami.\n\nDengan berat hati kami menyampaikan bahwa pada kesempatan kali ini, pendaftaran Ananda *BELUM DAPAT DITERIMA* karena alasan berikut:\n_${reason || "Kuota kelas telah penuh / Tidak memenuhi persyaratan administrasi"}_\n\nApabila Bapak/Ibu membutuhkan informasi lebih lanjut, silakan menghubungi pihak administrasi sekolah. Kami mendoakan yang terbaik untuk pendidikan Ananda.\n\nHormat kami,\nManajemen PAUD/TK`,
       );
     }
 
@@ -889,7 +889,7 @@ export async function recordPayment(formData: FormData) {
         if (invoice.student.parent?.whatsapp) {
           await sendWhatsAppNotification(
             invoice.student.parent.whatsapp,
-            `Terima kasih. Pembayaran Uang Pangkal untuk ananda ${invoice.student.fullName} telah kami terima secara penuh. Nomor Induk Siswa (NIS) resmi ananda adalah: ${newNis}.`,
+            `*KONFIRMASI PEMBAYARAN BERHASIL*\n\nYth. Bapak/Ibu Orang Tua dari Ananda ${invoice.student.fullName},\n\nTerima kasih, pembayaran Uang Pangkal Ananda telah kami terima dan verifikasi secara penuh.\n\nBerikut adalah Nomor Induk Siswa (NIS) resmi Ananda:\n*${newNis}*\n\nSelamat bergabung di keluarga besar kami! Jika ada pertanyaan lebih lanjut, silakan hubungi administrasi sekolah.\n\nHormat kami,\nBagian Keuangan PAUD/TK`,
           );
         }
       }
@@ -1033,7 +1033,7 @@ export async function recordAttendance(formData: FormData) {
       if (student?.parent?.whatsapp) {
         await sendWhatsAppNotification(
           student.parent.whatsapp,
-          `${student.nickName || student.fullName} sudah tiba di sekolah pada ${date.toLocaleDateString("id-ID")}. Terima kasih.`,
+          `*INFO KEHADIRAN SISWA*\n\nYth. Bapak/Ibu Orang Tua,\n\nKami menginformasikan bahwa Ananda *${student.nickName || student.fullName}* telah tiba di sekolah dengan selamat pada hari ini, ${date.toLocaleDateString("id-ID", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.\n\nTerima kasih,\nSistem Presensi PAUD/TK`,
         );
       }
     }
@@ -1112,7 +1112,7 @@ export async function recordBulkAttendance(formData: FormData) {
         if (student.parent?.whatsapp) {
           await sendWhatsAppNotification(
             student.parent.whatsapp,
-            `${student.nickName || student.fullName} sudah tiba di sekolah pada ${date.toLocaleDateString("id-ID")}. Terima kasih.`,
+            `*INFO KEHADIRAN SISWA*\n\nYth. Bapak/Ibu Orang Tua,\n\nKami menginformasikan bahwa Ananda *${student.nickName || student.fullName}* telah tiba di sekolah dengan selamat pada hari ini, ${date.toLocaleDateString("id-ID", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.\n\nTerima kasih,\nSistem Presensi PAUD/TK`,
           );
         }
       }
@@ -1171,7 +1171,7 @@ export async function createDailyReport(formData: FormData) {
     if (student?.parent?.whatsapp) {
       await sendWhatsAppNotification(
         student.parent.whatsapp,
-        `Laporan harian ${student.nickName || student.fullName}: ${activities}. Mood: ${mood || "-"}. Makan: ${meals || "-"}. Tidur siang: ${napDuration || "-"}.`,
+        `*LAPORAN HARIAN SISWA (DAILY REPORT)*\n\nYth. Bapak/Ibu Orang Tua,\n\nBerikut adalah ringkasan aktivitas Ananda *${student.nickName || student.fullName}* hari ini:\n\n📅 Aktivitas: ${activities}\n😊 Mood/Suasana Hati: ${mood || "-"}\n🍱 Porsi Makan: ${meals || "-"}\n💤 Durasi Tidur Siang: ${napDuration || "-"}\n\nUntuk melihat detail catatan dari guru pendamping, silakan akses fitur Buku Penghubung di Portal Orang Tua.\n\nTerima kasih,\nWali Kelas Ananda`,
       );
     }
 

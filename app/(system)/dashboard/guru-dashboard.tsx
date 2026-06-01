@@ -5,6 +5,8 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
+import { AnnouncementWidget } from "@/components/announcement-widget";
+
 export async function GuruDashboard({ user }: { user: any }) {
   if (!user.teacherId) return null;
 
@@ -32,6 +34,8 @@ export async function GuruDashboard({ user }: { user: any }) {
           </div>
         </div>
       </div>
+
+      <AnnouncementWidget targetRole="TEACHER" />
 
       {/* Primary Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -112,27 +116,25 @@ export async function GuruDashboard({ user }: { user: any }) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-16 text-sm font-semibold text-muted-foreground">07:30</div>
-                <div className="flex-1 rounded-md bg-muted p-2 text-sm border-l-4 border-emerald-500">
-                  <div className="font-medium">Penyambutan Anak</div>
-                  <div className="text-xs text-muted-foreground">Halaman Sekolah</div>
+              {stats.todaySchedules && stats.todaySchedules.length > 0 ? (
+                stats.todaySchedules.map((schedule: any, i: number) => {
+                  const colors = ["border-emerald-500", "border-blue-500", "border-amber-500", "border-purple-500", "border-rose-500"];
+                  const color = colors[i % colors.length];
+                  return (
+                    <div key={schedule.id} className="flex items-center gap-4">
+                      <div className="w-16 text-sm font-semibold text-muted-foreground">{schedule.startTime}</div>
+                      <div className={`flex-1 rounded-md bg-muted p-2 text-sm border-l-4 ${color}`}>
+                        <div className="font-medium">{schedule.activity}</div>
+                        <div className="text-xs text-muted-foreground">{schedule.location || "Sesuai Kelas"}</div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="py-8 text-center text-sm text-muted-foreground border rounded-lg border-dashed">
+                  Belum ada jadwal kelas untuk hari ini.
                 </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="w-16 text-sm font-semibold text-muted-foreground">08:00</div>
-                <div className="flex-1 rounded-md bg-muted p-2 text-sm border-l-4 border-blue-500">
-                  <div className="font-medium">Kegiatan Inti (RPPH)</div>
-                  <div className="text-xs text-muted-foreground">Sesuai Tema Kelas</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="w-16 text-sm font-semibold text-muted-foreground">10:00</div>
-                <div className="flex-1 rounded-md bg-muted p-2 text-sm border-l-4 border-amber-500">
-                  <div className="font-medium">Makan & Istirahat</div>
-                  <div className="text-xs text-muted-foreground">Ruang Makan</div>
-                </div>
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>

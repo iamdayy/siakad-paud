@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
           const pdfBuffer = await generateInvoicePDF(invoice);
           await sendEmail({
             to: invoice.student.parent.email,
-            subject: `PENGINGAT: Tagihan ${invoice.category} Belum Lunas`,
-            text: `Yth. Orang Tua dari ${invoice.student.fullName},\n\nKami menginformasikan bahwa terdapat tagihan ${invoice.category} (Kode: ${invoice.code}) yang telah melewati jatuh tempo pada ${invoice.dueDate.toLocaleDateString("id-ID")}.\n\nTotal tunggakan dan denda (jika ada) dapat dilihat pada invoice terlampir. Mohon segera melakukan pembayaran.\n\nAbaikan pesan ini jika Anda sudah melakukan pembayaran dalam 24 jam terakhir.`,
+            subject: `[PAUD/TK] Surat Peringatan Tagihan ${invoice.category} - ${invoice.student.fullName}`,
+            text: `*SURAT PERINGATAN PEMBAYARAN*\n\nYth. Bapak/Ibu Orang Tua dari Ananda ${invoice.student.fullName},\n\nSemoga Bapak/Ibu senantiasa dalam keadaan sehat.\n\nMelalui surat elektronik ini, kami menginformasikan bahwa berdasarkan catatan sistem keuangan kami, tagihan ${invoice.category} dengan nomor referensi *${invoice.code}* telah *MELEWATI BATAS WAKTU PEMBAYARAN* (Jatuh tempo pada: ${invoice.dueDate.toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}).\n\nBersama email ini, kami melampirkan salinan tagihan (invoice) beserta kalkulasi denda keterlambatan (jika berlaku). Kami memohon kerja sama Bapak/Ibu untuk dapat segera melakukan pelunasan agar kegiatan belajar mengajar Ananda dapat terus berjalan dengan lancar.\n\nJika Bapak/Ibu telah melakukan pembayaran dalam 1x24 jam terakhir, mohon abaikan email ini.\n\nTerima kasih atas perhatian dan kerja samanya.\n\nHormat kami,\nBagian Keuangan PAUD/TK`,
             attachments: [
               {
                 filename: `Reminder_${invoice.code}.pdf`,

@@ -10,10 +10,11 @@ import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
-export default async function OrangTuaProfilePage({ params }: { params: { id: string } }) {
+export default async function OrangTuaProfilePage({ params }: { params: Promise<{ id: string }> }) {
   await requirePageAccess("/orangtua", ["ADMIN", "TU", "KEPALA_SEKOLAH"]);
 
-  const parent = await getParentById(params.id);
+  const { id } = await params;
+  const parent = await getParentById(id);
   if (!parent) return notFound();
 
   const titleName = [parent.fatherName, parent.motherName].filter(Boolean).join(" & ") || "Data Wali";

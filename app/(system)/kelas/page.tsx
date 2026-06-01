@@ -59,7 +59,8 @@ import {
 } from "@/components/ui/table";
 import { requirePageAccess } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Library, Users, ShieldAlert, MoreHorizontal, Trash } from "lucide-react";
+import { Library, Users, ShieldAlert, MoreHorizontal, Trash, Calendar } from "lucide-react";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -269,6 +270,12 @@ export default async function KelasPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link href={`/kelas/${row.id}/jadwal`} className="cursor-pointer">
+                                  <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                                  Kelola Jadwal
+                                </Link>
+                              </DropdownMenuItem>
                               <DropdownMenuItem asChild>
                                 <Dialog>
                                   <DialogTrigger asChild>

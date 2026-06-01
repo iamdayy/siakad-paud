@@ -8,10 +8,11 @@ import { GraduationCap, Users, BookOpen } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function GuruProfilePage({ params }: { params: { id: string } }) {
+export default async function GuruProfilePage({ params }: { params: Promise<{ id: string }> }) {
   await requirePageAccess("/guru", ["ADMIN", "TU", "KEPALA_SEKOLAH"]);
 
-  const teacher = await getTeacherById(params.id);
+  const { id } = await params;
+  const teacher = await getTeacherById(id);
   if (!teacher) return notFound();
 
   return (

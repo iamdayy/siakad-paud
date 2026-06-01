@@ -16,10 +16,11 @@ function studentBadgeColor(status: string) {
   return "destructive";
 }
 
-export default async function SiswaProfilePage({ params }: { params: { id: string } }) {
+export default async function SiswaProfilePage({ params }: { params: Promise<{ id: string }> }) {
   await requirePageAccess("/siswa", ["ADMIN", "TU", "KEPALA_SEKOLAH"]);
 
-  const student = await getStudentById(params.id);
+  const { id } = await params;
+  const student = await getStudentById(id);
   if (!student) return notFound();
 
   return (

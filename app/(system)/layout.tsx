@@ -13,15 +13,18 @@ const ALL_MAIN_PATHS = [
   "/dashboard",
   "/ppdb",
   "/siswa",
+  "/orangtua",
   "/guru",
   "/kelas",
   "/presensi",
   "/keuangan",
   "/laporan",
+  "/laporan/lesson-plan",
+  "/pengumuman",
   "/admin/pengaturan",
 ];
 
-const ALL_GURU_PATHS = ["/guru/kelas", "/guru/presensi", "/guru/raport"];
+const ALL_GURU_PATHS = ["/guru/kelas", "/guru/presensi", "/guru/raport", "/guru/lesson-plan"];
 
 export default async function SystemLayout({
   children,

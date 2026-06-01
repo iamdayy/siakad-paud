@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import NextTopLoader from "nextjs-toploader";
+import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -48,6 +49,7 @@ export default function RootLayout({
           <NextTopLoader color="#F59E0B" showSpinner={false} />
           {children}
           <Toaster />
+          <PwaRegister />
         </ThemeProvider>
       </body>
     </html>

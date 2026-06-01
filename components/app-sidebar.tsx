@@ -34,19 +34,29 @@ import {
 const menuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/ppdb", label: "PPDB", icon: FileText },
+];
+
+const dataSubMenus = [
   { href: "/siswa", label: "Data Siswa", icon: Users },
+  { href: "/orangtua", label: "Data Orang Tua", icon: Users },
   { href: "/guru", label: "Guru & Staf", icon: GraduationCap },
   { href: "/kelas", label: "Data Kelas", icon: BookOpen },
   { href: "/presensi", label: "Presensi", icon: CalendarCheck },
-  { href: "/keuangan", label: "Keuangan", icon: Wallet },
   { href: "/laporan", label: "Laporan", icon: BarChart3 },
-  { href: "/admin/pengaturan", label: "Pengaturan", icon: Sparkles },
+  { href: "/keuangan", label: "Keuangan", icon: Wallet },
 ];
+
+const systemSubMenus = [
+  { href: "/laporan/lesson-plan", label: "Logbook Guru", icon: BookOpen },
+  { href: "/pengumuman", label: "Pengumuman", icon: GraduationCap },
+  { href: "/admin/pengaturan", label: "Pengaturan", icon: Sparkles },
+]
 
 const guruSubMenus = [
   { href: "/guru/kelas", label: "Kelas Saya", icon: Users },
   { href: "/guru/presensi", label: "Presensi Guru", icon: CalendarCheck },
   { href: "/guru/raport", label: "E-Raport", icon: BookOpen },
+  { href: "/guru/lesson-plan", label: "Logbook (RPPH)", icon: FileText },
 ];
 
 type AppSidebarProps = {
@@ -65,6 +75,8 @@ export function AppSidebar({
   const pathname = usePathname();
 
   const mainMenus = menuItems.filter((m) => visiblePaths.includes(m.href));
+  const dataMenus = dataSubMenus.filter((m) => visiblePaths.includes(m.href));
+  const systemMenus = systemSubMenus.filter((m) => visiblePaths.includes(m.href));
   const guruMenus = guruSubMenus.filter((m) => visibleGuruPaths.includes(m.href));
 
   return (
@@ -109,6 +121,60 @@ export function AppSidebar({
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {dataMenus.length > 0 && (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup>
+              <SidebarGroupLabel>Data</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {dataMenus.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname === item.href || pathname.startsWith(`${item.href}/`)}
+                        tooltip={item.label}
+                      >
+                        <Link href={item.href}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
+
+        {systemMenus.length > 0 && (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup>
+              <SidebarGroupLabel>Sistem</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {systemMenus.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname === item.href || pathname.startsWith(`${item.href}/`)}
+                        tooltip={item.label}
+                      >
+                        <Link href={item.href}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
 
         {guruMenus.length > 0 && (
           <>

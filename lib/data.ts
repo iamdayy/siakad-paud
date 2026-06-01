@@ -20,7 +20,8 @@ function mapInvoiceLabel(status: InvoiceStatus) {
   return labels[status];
 }
 
-function mapAssessmentLabel(indicator: AssessmentIndicator) {
+function mapAssessmentLabel(indicator: AssessmentIndicator | null) {
+  if (!indicator) return "-";
   const labels: Record<AssessmentIndicator, string> = {
     BB: "Belum Berkembang",
     MB: "Mulai Berkembang",
@@ -635,6 +636,10 @@ export async function getGuruDashboardStats(teacherId: string) {
         ],
       },
       include: {
+        schedules: {
+          where: { dayOfWeek: new Date().getDay() || 7 },
+          orderBy: { startTime: "asc" }
+        },
         students: {
           select: {
             id: true,
@@ -692,7 +697,8 @@ export async function getGuruDashboardStats(teacherId: string) {
       absentToday,
       unrecordedAttendance,
       filledReports,
-      pendingReports
+      pendingReports,
+      todaySchedules: classes.flatMap(c => c.schedules).sort((a, b) => a.startTime.localeCompare(b.startTime))
     };
   } catch (error) {
     console.error("Failed to fetch guru stats:", error);
@@ -704,6 +710,7 @@ export async function getGuruDashboardStats(teacherId: string) {
       unrecordedAttendance: 0,
       filledReports: 0,
       pendingReports: 0,
+      todaySchedules: [],
     };
   }
 }

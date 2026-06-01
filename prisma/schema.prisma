@@ -45,8 +45,11 @@ enum InvoiceStatus {
 
 enum InvoiceCategory {
   SPP
-  UANG_PANGKAL
-  SERAGAM
+  PANGKAL
+  CATERING
+  JEMPUTAN
+  OUTING
+  BUKU
   LAINNYA
 }
 
@@ -283,8 +286,9 @@ model Classroom {
   coTeacherId String?
   coTeacher   Teacher? @relation("CoTeacher", fields: [coTeacherId], references: [id], onDelete: SetNull)
 
-  students Student[]
-
+  students  Student[]
+  schedules ClassSchedule[]
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -428,4 +432,23 @@ model SystemSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+// ─── Class Schedule ────────────────────────────────────────────────────────────
+
+model ClassSchedule {
+  id          String    @id @default(cuid())
+  classroomId String
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  
+  dayOfWeek   Int       // 1 = Monday, ..., 5 = Friday
+  startTime   String    // e.g. "07:30"
+  endTime     String    // e.g. "08:00"
+  activity    String
+  location    String?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([classroomId, dayOfWeek])
 }

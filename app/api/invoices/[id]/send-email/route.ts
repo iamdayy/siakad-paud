@@ -42,10 +42,10 @@ export async function POST(
 
     // Send Email
     const isPaid = invoice.status === "PAID";
-    const subject = isPaid ? `Kwitansi Pembayaran: ${invoice.category}` : `Tagihan Invoice: ${invoice.category}`;
+    const subject = isPaid ? `[PAUD/TK] Kwitansi Pembayaran Resmi: ${invoice.category}` : `[PAUD/TK] Tagihan Baru: ${invoice.category}`;
     const text = isPaid
-      ? `Yth. Orang Tua dari ${invoice.student?.fullName},\n\nTerima kasih, pembayaran Anda untuk tagihan ${invoice.category} telah kami terima. Terlampir kwitansi pembayaran resmi dari PAUD Ceria Bintang.`
-      : `Yth. Orang Tua dari ${invoice.student?.fullName},\n\nBerikut kami lampirkan invoice tagihan ${invoice.category}. Mohon segera melakukan pembayaran. Rincian lebih lanjut terdapat pada dokumen terlampir.`;
+      ? `*TANDA TERIMA PEMBAYARAN (KWITANSI)*\n\nYth. Bapak/Ibu Orang Tua dari Ananda ${invoice.student?.fullName},\n\nSemoga Bapak/Ibu senantiasa dalam keadaan sehat.\n\nMelalui email ini, kami mengonfirmasi bahwa pembayaran untuk tagihan ${invoice.category} (Ref: ${invoice.code}) telah kami *TERIMA* dan *TERVERIFIKASI*.\n\nSebagai bukti transaksi yang sah, kami telah melampirkan Kwitansi Pembayaran resmi. Kami mengucapkan terima kasih atas kelancaran pembayaran Bapak/Ibu yang sangat mendukung kelangsungan proses pendidikan Ananda.\n\nHormat kami,\nBagian Keuangan PAUD/TK`
+      : `*PEMBERITAHUAN TAGIHAN BARU*\n\nYth. Bapak/Ibu Orang Tua dari Ananda ${invoice.student?.fullName},\n\nSemoga Bapak/Ibu senantiasa dalam keadaan sehat.\n\nBersama email ini, kami menerbitkan tagihan (invoice) baru untuk komponen ${invoice.category} dengan nomor referensi *${invoice.code}*. \n\nBapak/Ibu dapat meninjau rincian tagihan beserta tenggat waktu pembayarannya pada dokumen PDF yang terlampir. Kami mohon agar pembayaran dapat dilakukan sebelum tanggal jatuh tempo guna menghindari denda keterlambatan administrasi.\n\nAtas perhatian dan kerja samanya, kami ucapkan terima kasih.\n\nHormat kami,\nBagian Keuangan PAUD/TK`;
 
     await sendEmail({
       to: parentEmail,

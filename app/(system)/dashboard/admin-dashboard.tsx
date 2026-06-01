@@ -37,6 +37,8 @@ import {
 } from "lucide-react";
 
 
+import { AnnouncementWidget } from "@/components/announcement-widget";
+
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -173,6 +175,8 @@ export async function AdminDashboard() {
           </Card>
         </Link>
       </div>
+
+      <AnnouncementWidget targetRole="ALL" />
 
       {/* Secondary Stats Row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
