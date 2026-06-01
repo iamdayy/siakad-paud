@@ -28,21 +28,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
     }
 
-    // Process based on transaction status
-    const invoiceId = custom_field1; // We passed invoice ID here
-
-    if (!invoiceId) {
-      return NextResponse.json({ error: "No invoice ID in custom_field1" }, { status: 400 });
+    // Acknowledge Midtrans Dashboard Test Notifications
+    if (order_id && order_id.startsWith("payment_notif_test")) {
+      return NextResponse.json({ status: "test notification acknowledged" }, { status: 200 });
     }
 
-    if (
-      transaction_status === "capture" ||
-      transaction_status === "settlement"
-    ) {
-      if (transaction_status === "capture" && fraud_status === "challenge") {
-        // Do nothing, wait for accept/deny
-        return NextResponse.json({ status: "challenge received" });
-      }
+    // Always respond 200 OK to Midtrans if the signature is valid, 
+    // even if we decide not to process (e.g. pending/challenge/deny status),
+    // to prevent Midtrans from endlessly retrying.
+    const invoiceId = custom_field1;
+
+    if (!invoiceId) {
+      // Return 200 to acknowledge but ignore, rather than 400 which triggers retries
+      return NextResponse.json({ status: "ignored: no invoice ID in custom_field1" }, { status: 200 });
+    }
+
+    // Validate based on Midtrans Best Practices:
+    // 1. Status Code == 200
+    // 2. Transaction Status == capture or settlement
+    // 3. Fraud Status == accept (if exists)
+    const isSuccess =
+      status_code === "200" &&
+      (transaction_status === "capture" || transaction_status === "settlement") &&
+      (!fraud_status || fraud_status === "accept");
+
+    if (isSuccess) {
 
       // Check if already processed to prevent duplicate payment records
       const existingPayment = await prisma.payment.findFirst({
@@ -92,11 +102,12 @@ export async function POST(request: Request) {
         }
       }
 
-      return NextResponse.json({ status: "success" });
+      return NextResponse.json({ status: "success" }, { status: 200 });
     }
 
-    // Other statuses (pending, deny, cancel, expire)
-    return NextResponse.json({ status: "received but not settled" });
+    // For any other status (pending, expire, deny, challenge), we just acknowledge with 200
+    // so Midtrans knows we received it and won't retry.
+    return NextResponse.json({ status: "ignored or not success" }, { status: 200 });
 
   } catch (error: any) {
     console.error("Webhook error:", error);

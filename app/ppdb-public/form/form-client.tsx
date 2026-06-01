@@ -109,7 +109,7 @@ export default function PpdbFormClient({ year }: { year: string }) {
       const uploadedKeys: string[] = [];
       const toUpload = selectedFiles.filter(s => !s.error).map((s) => s.file).slice(0, MAX_FILES);
 
-      // Handle file uploads (Mocked here since R2 integration might vary)
+      // Handle file uploads
       if (toUpload.length) {
         const req = await fetch("/api/ppdb/upload-url", {
           method: "POST",
@@ -120,11 +120,25 @@ export default function PpdbFormClient({ year }: { year: string }) {
         });
         if (req.ok) {
           const { urls } = await req.json();
-          // Simulating upload mapping
-          urls.forEach((u: any) => {
-            if (u.key) uploadedKeys.push(u.key);
-            else if (u.publicUrl) uploadedKeys.push(u.publicUrl);
-          });
+          
+          // Actual file upload to S3/R2
+          await Promise.all(
+            urls.map(async (u: any, i: number) => {
+              const file = toUpload[i];
+              const uploadRes = await fetch(u.url, {
+                method: "PUT",
+                headers: { "Content-Type": file.type },
+                body: file,
+              });
+              if (!uploadRes.ok) {
+                throw new Error(`Failed to upload ${file.name}`);
+              }
+              if (u.key) uploadedKeys.push(u.key);
+              else if (u.publicUrl) uploadedKeys.push(u.publicUrl);
+            })
+          );
+        } else {
+          throw new Error("Gagal mendapatkan link upload");
         }
       }
 
