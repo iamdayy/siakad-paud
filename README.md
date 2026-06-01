@@ -36,7 +36,8 @@ Aplikasi ini mencakup seluruh siklus operasional harian sekolah dari Pendaftaran
 
 ### 4. Akademik, Raport & Presensi
 - **Buku Penghubung Digital**: Laporan *Daily Report* harian (Durasi Tidur, Nafsu Makan, Aktivitas) untuk anak PAUD/Daycare yang dibagikan harian ke ponsel orang tua.
-- **E-Raport Naratif**: Penilaian deskriptif komprehensif berdasarkan 6 indikator tumbuh kembang standar nasional (Nilai Agama, Kognitif, Motorik, Bahasa, Sosial, Seni).
+- **E-Raport Semester Interaktif**: Sistem pengisian raport skala penuh dengan fitur **Simpan Draft** dan **Publikasikan**. Menggunakan pemfilteran berdasarkan periode semester berjalan. Penilaian mencakup narasi dari 6 indikator tumbuh kembang standar nasional (Nilai Agama, Kognitif, Motorik, Bahasa, Sosial, Seni).
+- **Cetak Raport PDF Otomatis**: Generate dokumen raport murni menggunakan CSS Print (*A4 ready*). Dokumen bersih dari elemen UI dashboard dan langsung siap dicetak serta ditandatangani.
 - **Presensi Harian & Logbook Guru**: Modul kehadiran guru dan unggahan Rencana Pelaksanaan Pembelajaran (RPPH/RPPM) per kelas.
 
 ---

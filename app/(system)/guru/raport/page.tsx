@@ -1,4 +1,3 @@
-import { RaportForm } from "@/components/raport/RaportForm";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -9,13 +8,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -28,10 +26,27 @@ import { getCurrentUser } from "@/lib/auth";
 import { getStudentsForRaport } from "@/lib/data";
 import { FileEdit, GraduationCap } from "lucide-react";
 
+import Link from "next/link";
+import { redirect } from "next/navigation";
+
 export const dynamic = "force-dynamic";
 
-export default async function TeacherRaportPage() {
+const PERIODS = [
+  "Semester 1 2025/2026",
+  "Semester 2 2025/2026",
+  "Semester 1 2026/2027",
+  "Semester 2 2026/2027",
+];
+
+export default async function TeacherRaportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string }>;
+}) {
   const user = await getCurrentUser();
+  const { period } = await searchParams;
+  const activePeriod = period || PERIODS[0];
+
   const { students } = await getStudentsForRaport(
     user?.role === "GURU" ? user.teacherId! : undefined
   );
@@ -54,11 +69,25 @@ export default async function TeacherRaportPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Daftar Siswa Didik</CardTitle>
-          <CardDescription>
-            Pilih siswa untuk memasukkan nilai raport pada periode ini.
-          </CardDescription>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+          <div>
+            <CardTitle>Daftar Siswa Didik</CardTitle>
+            <CardDescription>
+              Pilih siswa untuk memasukkan nilai raport pada periode ini.
+            </CardDescription>
+          </div>
+          <form method="GET" action="/guru/raport" className="flex items-center gap-2">
+            <select
+              name="period"
+              defaultValue={activePeriod}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+            >
+              {PERIODS.map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+            <button type="submit" className={buttonVariants({ variant: "secondary", size: "sm" })}>Pilih</button>
+          </form>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -72,51 +101,58 @@ export default async function TeacherRaportPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {students.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell className="font-medium">
-                      <div>
-                        {student.fullName}
-                        <div className="text-xs text-muted-foreground">
-                          {student.nickName ? `Panggilan: ${student.nickName}` : "-"}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{student.classroom?.name || "Belum masuk kelas"}</TableCell>
-                    <TableCell>
-                      {student.assessments.length > 0 ? (
-                        <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">
-                          {student.assessments.length} Raport Tersimpan
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">Belum dinilai</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Dialog>
-                        <DialogTrigger className={buttonVariants({ size: "sm", className: "gap-2" })}>
-                          <FileEdit className="h-4 w-4" />
-                          Isi Raport
-                        </DialogTrigger>
-                        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Formulir E-Raport PAUD</DialogTitle>
-                            <DialogDescription>
-                              Mengisi nilai dan narasi perkembangan kualitatif untuk <strong>{student.fullName}</strong>
-                            </DialogDescription>
-                          </DialogHeader>
-                          
-                          <div className="mt-4">
-                            <RaportForm 
-                              studentId={student.id} 
-                              studentName={student.fullName}
-                            />
+                {students.map((student) => {
+                  const currentAssessment = student.assessments.find(a => a.periodLabel === activePeriod);
+                  
+                  return (
+                    <TableRow key={student.id}>
+                      <TableCell className="font-medium">
+                        <div>
+                          {student.fullName}
+                          <div className="text-xs text-muted-foreground">
+                            {student.nickName ? `Panggilan: ${student.nickName}` : "-"}
                           </div>
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>{student.classroom?.name || "Belum masuk kelas"}</TableCell>
+                      <TableCell>
+                        {currentAssessment ? (
+                          currentAssessment.isPublished ? (
+                            <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">
+                              Telah Dipublikasi
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                              Draft
+                            </Badge>
+                          )
+                        ) : (
+                          <Badge variant="outline" className="text-muted-foreground">
+                            Belum Diisi
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link 
+                          href={`/guru/raport/${student.id}?period=${encodeURIComponent(activePeriod)}`}
+                          className={buttonVariants({ size: "sm", className: "gap-2" })}
+                        >
+                          <FileEdit className="h-4 w-4" />
+                          {currentAssessment ? "Edit Raport" : "Isi Raport"}
+                        </Link>
+                        {currentAssessment?.isPublished && (
+                          <Link 
+                            href={`/raport/${currentAssessment.id}/print`}
+                            target="_blank"
+                            className={buttonVariants({ size: "sm", variant: "outline", className: "ml-2 gap-2" })}
+                          >
+                            Cetak
+                          </Link>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {students.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">

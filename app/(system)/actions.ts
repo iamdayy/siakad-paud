@@ -508,55 +508,6 @@ export async function teacherCheckIn(formData: FormData) {
   }
 }
 
-export async function saveAssessment(formData: FormData) {
-  await requireActionAccess(["ADMIN", "TU", "GURU", "KEPALA_SEKOLAH"]);
-
-  const studentId = formData.get("studentId") as string;
-  const periodLabel = formData.get("periodLabel") as string;
-
-  if (!studentId || !periodLabel) return;
-
-  const data = {
-    agamaMoral: formData.get("agamaMoral") as any,
-    fisikMotorik: formData.get("fisikMotorik") as any,
-    kognitif: formData.get("kognitif") as any,
-    bahasa: formData.get("bahasa") as any,
-    sosialEmosional: formData.get("sosialEmosional") as any,
-    seni: formData.get("seni") as any,
-
-    narasiAgamaMoral: formData.get("narasiAgamaMoral") as string,
-    narasiFisikMotorik: formData.get("narasiFisikMotorik") as string,
-    narasiKognitif: formData.get("narasiKognitif") as string,
-    narasiBahasa: formData.get("narasiBahasa") as string,
-    narasiSosialEmosional: formData.get("narasiSosialEmosional") as string,
-    narasiSeni: formData.get("narasiSeni") as string,
-  };
-
-  try {
-    const existing = await prisma.assessment.findFirst({
-      where: { studentId, periodLabel }
-    });
-
-    if (existing) {
-      await prisma.assessment.update({
-        where: { id: existing.id },
-        data
-      });
-    } else {
-      await prisma.assessment.create({
-        data: {
-          studentId,
-          periodLabel,
-          ...data
-        }
-      });
-    }
-
-    revalidatePath("/guru/raport");
-  } catch (error) {
-    console.error("saveAssessment failed", error);
-  }
-}
 
 export async function teacherCheckOut(formData: FormData) {
   const user = await requireActionAccess(["ADMIN", "TU", "GURU", "KEPALA_SEKOLAH"]);
@@ -1259,8 +1210,11 @@ export async function createAssessment(formData: FormData) {
 
     revalidatePath("/laporan");
     revalidatePath("/dashboard");
-  } catch (error) {
+    revalidatePath(`/guru/raport`);
+    return { success: true, message: isPublished ? "Raport berhasil dipublikasikan" : "Draft raport berhasil disimpan" };
+  } catch (error: any) {
     console.error("createAssessment failed", { studentId, periodLabel, error });
+    return { error: error.message || "Terjadi kesalahan saat menyimpan raport" };
   }
 }
 

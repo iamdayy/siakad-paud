@@ -75,12 +75,12 @@ export function ClassDetailClient({ initialData, date }: { initialData: any; dat
             <span>{format(new Date(date), "EEEE, dd MMMM yyyy", { locale: localeId })}</span>
           </p>
         </div>
-        
+
         <div className="flex items-center space-x-3 bg-muted/50 p-2 rounded-lg border">
           <Label htmlFor="bulk-mode" className="cursor-pointer font-medium">Mode Satuan</Label>
-          <Switch 
-            id="bulk-mode" 
-            checked={isBulkMode} 
+          <Switch
+            id="bulk-mode"
+            checked={isBulkMode}
             onCheckedChange={setIsBulkMode}
             disabled={isCoTeacher} // Co-teacher disabled from bulk mode based on requested diff
           />
@@ -110,15 +110,15 @@ export function ClassDetailClient({ initialData, date }: { initialData: any; dat
       </div>
 
       {isBulkMode ? (
-        <BulkModeView 
-          students={students} 
-          date={date} 
-          isPending={isPending} 
-          startTransition={startTransition} 
+        <BulkModeView
+          students={students}
+          date={date}
+          isPending={isPending}
+          startTransition={startTransition}
         />
       ) : (
-        <SingleModeView 
-          students={students} 
+        <SingleModeView
+          students={students}
           isCoTeacher={isCoTeacher}
           isPending={isPending}
           onSaveAttendance={handleSingleAttendanceSubmit}
@@ -183,7 +183,7 @@ function SingleModeView({ students, isCoTeacher, isPending, onSaveAttendance, on
                 <TableCell className="text-right space-x-2">
                   <AttendanceDialog student={student} isPending={isPending} onSave={onSaveAttendance} attendance={todayAttendance} />
                   <ReportDialog student={student} isPending={isPending} isCoTeacher={isCoTeacher} onSave={onSaveReport} report={todayReport} />
-                  <RaportDialog student={student} isPending={isPending} isCoTeacher={isCoTeacher} onSave={onSaveRaport} />
+                  {/* <RaportDialog student={student} isPending={isPending} isCoTeacher={isCoTeacher} onSave={onSaveRaport} /> */}
                 </TableCell>
               </TableRow>
             );
@@ -275,28 +275,28 @@ function ReportDialog({ student, isPending, isCoTeacher, onSave, report }: any) 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Porsi Makan</Label>
-              <Input value={data.meals} onChange={(e) => setData({...data, meals: e.target.value})} placeholder="Cth: Habis 1 porsi" />
+              <Input value={data.meals} onChange={(e) => setData({ ...data, meals: e.target.value })} placeholder="Cth: Habis 1 porsi" />
             </div>
             <div className="space-y-2">
               <Label>Tidur Siang</Label>
-              <Input value={data.napDuration} onChange={(e) => setData({...data, napDuration: e.target.value})} placeholder="Cth: 1 Jam" />
+              <Input value={data.napDuration} onChange={(e) => setData({ ...data, napDuration: e.target.value })} placeholder="Cth: 1 Jam" />
             </div>
           </div>
           <div className="space-y-2">
             <Label>Mood / Emosi</Label>
-            <Input value={data.mood} onChange={(e) => setData({...data, mood: e.target.value})} placeholder="Cth: Sangat Ceria" />
+            <Input value={data.mood} onChange={(e) => setData({ ...data, mood: e.target.value })} placeholder="Cth: Sangat Ceria" />
           </div>
           <div className="space-y-2">
             <Label>Aktivitas Penting <span className="text-destructive">*</span></Label>
-            <Textarea required value={data.activities} onChange={(e) => setData({...data, activities: e.target.value})} placeholder="Kegiatan apa yang dilakukan hari ini?" />
+            <Textarea required value={data.activities} onChange={(e) => setData({ ...data, activities: e.target.value })} placeholder="Kegiatan apa yang dilakukan hari ini?" />
           </div>
           <div className="space-y-2">
             <Label>Catatan Guru {isCoTeacher && "(Khusus Guru Utama)"}</Label>
-            <Textarea 
-              disabled={isCoTeacher} 
-              value={data.note} 
-              onChange={(e) => setData({...data, note: e.target.value})} 
-              placeholder={isCoTeacher ? "Hanya guru utama yang bisa mengisi catatan akhir" : "Pesan atau evaluasi untuk orang tua"} 
+            <Textarea
+              disabled={isCoTeacher}
+              value={data.note}
+              onChange={(e) => setData({ ...data, note: e.target.value })}
+              placeholder={isCoTeacher ? "Hanya guru utama yang bisa mengisi catatan akhir" : "Pesan atau evaluasi untuk orang tua"}
             />
           </div>
           <div className="flex justify-end pt-4">
@@ -336,7 +336,7 @@ function BulkModeView({ students, date, isPending, startTransition }: any) {
           meals: data.meals,
           mood: data.mood,
         }));
-        
+
         await saveBulkData(students[0]?.classroomId, new Date(date), payload);
         toast.success("Data massal berhasil disimpan");
       } catch (e) {
@@ -364,9 +364,9 @@ function BulkModeView({ students, date, isPending, startTransition }: any) {
             <TableRow key={student.id}>
               <TableCell className="font-medium">{student.nickName}</TableCell>
               <TableCell>
-                <Select 
-                  value={formData[student.id].status} 
-                  onValueChange={(v) => setFormData({...formData, [student.id]: {...formData[student.id], status: v}})}
+                <Select
+                  value={formData[student.id].status}
+                  onValueChange={(v) => setFormData({ ...formData, [student.id]: { ...formData[student.id], status: v } })}
                 >
                   <SelectTrigger className="w-[120px]">
                     <SelectValue />
@@ -380,10 +380,10 @@ function BulkModeView({ students, date, isPending, startTransition }: any) {
                 </Select>
               </TableCell>
               <TableCell>
-                <Input 
-                  placeholder="Kegiatan..." 
+                <Input
+                  placeholder="Kegiatan..."
                   value={formData[student.id].activities}
-                  onChange={(e) => setFormData({...formData, [student.id]: {...formData[student.id], activities: e.target.value}})}
+                  onChange={(e) => setFormData({ ...formData, [student.id]: { ...formData[student.id], activities: e.target.value } })}
                 />
               </TableCell>
             </TableRow>
@@ -433,9 +433,9 @@ function RaportDialog({ student, isPending, isCoTeacher, onSave }: any) {
   const AspectInput = ({ aspect, label }: { aspect: string, label: string }) => (
     <div className="space-y-2 border p-3 rounded-md">
       <Label className="font-semibold">{label}</Label>
-      <Select 
-        value={(data as any)[aspect]} 
-        onValueChange={(v) => setData({...data, [aspect]: v})}
+      <Select
+        value={(data as any)[aspect]}
+        onValueChange={(v) => setData({ ...data, [aspect]: v })}
         disabled={isCoTeacher}
       >
         <SelectTrigger>
@@ -451,7 +451,7 @@ function RaportDialog({ student, isPending, isCoTeacher, onSave }: any) {
         disabled={isCoTeacher}
         placeholder={`Narasi ${label}...`}
         value={(data as any)[`narasi${aspect.charAt(0).toUpperCase() + aspect.slice(1)}`]}
-        onChange={(e) => setData({...data, [`narasi${aspect.charAt(0).toUpperCase() + aspect.slice(1)}`]: e.target.value})}
+        onChange={(e) => setData({ ...data, [`narasi${aspect.charAt(0).toUpperCase() + aspect.slice(1)}`]: e.target.value })}
         className="mt-2 text-sm"
         rows={2}
       />
@@ -471,11 +471,11 @@ function RaportDialog({ student, isPending, isCoTeacher, onSave }: any) {
         <div className="space-y-4 pt-2">
           <div className="space-y-2">
             <Label>Periode Penilaian</Label>
-            <Input 
+            <Input
               disabled={isCoTeacher}
-              value={data.periodLabel} 
-              onChange={(e) => setData({...data, periodLabel: e.target.value})} 
-              placeholder="Cth: Semester Ganjil 2026/2027" 
+              value={data.periodLabel}
+              onChange={(e) => setData({ ...data, periodLabel: e.target.value })}
+              placeholder="Cth: Semester Ganjil 2026/2027"
             />
           </div>
 
@@ -490,20 +490,20 @@ function RaportDialog({ student, isPending, isCoTeacher, onSave }: any) {
 
           <div className="space-y-2">
             <Label>Narasi Keseluruhan (Raport)</Label>
-            <Textarea 
+            <Textarea
               disabled={isCoTeacher}
               value={data.narrative}
-              onChange={(e) => setData({...data, narrative: e.target.value})}
+              onChange={(e) => setData({ ...data, narrative: e.target.value })}
               rows={3}
             />
           </div>
 
           <div className="space-y-2">
             <Label>Rekomendasi Guru / Catatan Khusus</Label>
-            <Textarea 
+            <Textarea
               disabled={isCoTeacher}
               value={data.note}
-              onChange={(e) => setData({...data, note: e.target.value})}
+              onChange={(e) => setData({ ...data, note: e.target.value })}
               rows={2}
             />
           </div>

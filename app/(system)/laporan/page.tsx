@@ -327,7 +327,10 @@ export default async function LaporanPage() {
                     </DialogDescription>
                   </DialogHeader>
                   <form
-                    action={createAssessment}
+                    action={async (formData) => {
+                      "use server";
+                      await createAssessment(formData);
+                    }}
                     className="mt-2 space-y-6"
                   >
                     {/* Student & Period */}

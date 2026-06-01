@@ -1,11 +1,13 @@
 "use client";
 
-import { saveAssessment } from "@/app/(system)/actions";
+import { createAssessment } from "@/app/(system)/actions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Save } from "lucide-react";
-import { useState } from "react";
+import { Save, Send } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 
 const INDICATORS = [
   { value: "BB", label: "Belum Berkembang (BB)" },
@@ -14,54 +16,68 @@ const INDICATORS = [
   { value: "BSB", label: "Berkembang Sangat Baik (BSB)" },
 ];
 
-const PERIODS = [
-  { value: "Semester 1 2025/2026", label: "Semester 1 - 2025/2026" },
-  { value: "Semester 2 2025/2026", label: "Semester 2 - 2025/2026" },
-  { value: "Semester 1 2026/2027", label: "Semester 1 - 2026/2027" },
-  { value: "Semester 2 2026/2027", label: "Semester 2 - 2026/2027" },
-];
-
-type AssessmentFormProps = {
+type AssessmentFormClientProps = {
   studentId: string;
-  studentName: string;
-  existingData?: any; // To preload data if we add an edit feature later
-  onClose?: () => void;
+  periodLabel: string;
+  existingData?: any;
 };
 
-export function RaportForm({ studentId, studentName, existingData, onClose }: AssessmentFormProps) {
-  const [loading, setLoading] = useState(false);
+export function AssessmentFormClient({ studentId, periodLabel, existingData }: AssessmentFormClientProps) {
+  const [loadingDraft, setLoadingDraft] = useState(false);
+  const [loadingPublish, setLoadingPublish] = useState(false);
+  const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
 
-  // Using native select since Shadcn Select can be tricky with formData without hidden inputs.
-  // We'll use a simple native select for stability in forms.
+  async function handleSubmit(e: React.MouseEvent<HTMLButtonElement>, isPublished: boolean) {
+    e.preventDefault();
+    if (!formRef.current) return;
+    
+    if (isPublished) {
+      setLoadingPublish(true);
+    } else {
+      setLoadingDraft(true);
+    }
+
+    const formData = new FormData(formRef.current);
+    formData.append("studentId", studentId);
+    formData.append("periodLabel", periodLabel);
+    formData.append("isPublished", String(isPublished));
+
+    const result = await createAssessment(formData);
+
+    if (result && result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success(result?.message || "Raport berhasil disimpan.");
+      router.push("/guru/raport?period=" + encodeURIComponent(periodLabel));
+    }
+
+    setLoadingDraft(false);
+    setLoadingPublish(false);
+  }
+
   return (
-    <form
-      action={async (formData) => {
-        setLoading(true);
-        formData.append("studentId", studentId);
-        await saveAssessment(formData);
-        setLoading(false);
-        if (onClose) onClose();
-      }}
-      className="space-y-6"
-    >
-      <div className="space-y-4">
-        <div>
-          <Label className="text-base font-semibold">Periode Penilaian</Label>
-          <p className="mb-2 text-sm text-muted-foreground">Pilih semester dan tahun ajaran untuk raport ini.</p>
-          <select
-            name="periodLabel"
-            required
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            defaultValue={existingData?.periodLabel || PERIODS[0].value}
-          >
-            {PERIODS.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}
-              </option>
-            ))}
-          </select>
+    <div className="space-y-6">
+      {existingData?.isPublished && (
+        <div className="rounded-md bg-green-50 p-4 border border-green-200 mb-6">
+          <p className="text-sm text-green-800 font-medium">Raport ini telah dipublikasikan dan dapat dilihat oleh orang tua. Anda masih dapat mengubah nilainya dan mempublikasikan ulang.</p>
         </div>
-
+      )}
+      
+      {/* 
+        We use two submit buttons triggering the same form but with different action modes.
+        To do this efficiently in React, we handle onSubmit on the form and pass a specific flag based on which button was clicked.
+        Since native HTML doesn't pass the clicked button value in formData automatically without extra wiring,
+        we'll use a hidden input or manage submit via a state or custom handler.
+        Alternatively, simpler: We intercept onSubmit by assigning an onClick to buttons that sets a ref or state.
+      */}
+      <form 
+        ref={formRef}
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}
+        className="space-y-6"
+      >
         <div className="grid gap-6 md:grid-cols-2">
           {/* Agama & Moral */}
           <div className="space-y-2 rounded-lg border p-4">
@@ -79,7 +95,7 @@ export function RaportForm({ studentId, studentName, existingData, onClose }: As
               name="narasiAgamaMoral"
               placeholder="Deskripsi perkembangan agama dan moral anak..."
               defaultValue={existingData?.narasiAgamaMoral || ""}
-              rows={3}
+              rows={4}
               className="mt-2"
             />
           </div>
@@ -100,7 +116,7 @@ export function RaportForm({ studentId, studentName, existingData, onClose }: As
               name="narasiFisikMotorik"
               placeholder="Deskripsi perkembangan motorik kasar dan halus..."
               defaultValue={existingData?.narasiFisikMotorik || ""}
-              rows={3}
+              rows={4}
               className="mt-2"
             />
           </div>
@@ -121,7 +137,7 @@ export function RaportForm({ studentId, studentName, existingData, onClose }: As
               name="narasiKognitif"
               placeholder="Deskripsi kemampuan memecahkan masalah anak..."
               defaultValue={existingData?.narasiKognitif || ""}
-              rows={3}
+              rows={4}
               className="mt-2"
             />
           </div>
@@ -142,7 +158,7 @@ export function RaportForm({ studentId, studentName, existingData, onClose }: As
               name="narasiBahasa"
               placeholder="Deskripsi kemampuan memahami dan mengungkapkan bahasa..."
               defaultValue={existingData?.narasiBahasa || ""}
-              rows={3}
+              rows={4}
               className="mt-2"
             />
           </div>
@@ -163,7 +179,7 @@ export function RaportForm({ studentId, studentName, existingData, onClose }: As
               name="narasiSosialEmosional"
               placeholder="Deskripsi kemandirian dan interaksi sosial anak..."
               defaultValue={existingData?.narasiSosialEmosional || ""}
-              rows={3}
+              rows={4}
               className="mt-2"
             />
           </div>
@@ -184,23 +200,46 @@ export function RaportForm({ studentId, studentName, existingData, onClose }: As
               name="narasiSeni"
               placeholder="Deskripsi eksplorasi dan ekspresi seni anak..."
               defaultValue={existingData?.narasiSeni || ""}
-              rows={3}
+              rows={4}
               className="mt-2"
             />
           </div>
         </div>
-      </div>
 
-      <div className="flex justify-end gap-3 pt-4">
-        {onClose && (
-          <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
-            Batal
+        {/* Narrative General */}
+        <div className="space-y-2 rounded-lg border p-4 bg-muted/20">
+          <Label className="font-bold">Kesimpulan & Catatan Guru (Opsional)</Label>
+          <Textarea
+            name="narrative"
+            placeholder="Ringkasan atau kesimpulan secara umum..."
+            defaultValue={existingData?.narrative || ""}
+            rows={3}
+            className="mt-2"
+          />
+        </div>
+
+        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={(e) => handleSubmit(e, false)} 
+            disabled={loadingDraft || loadingPublish} 
+            className="gap-2"
+          >
+            <Save className="h-4 w-4" /> 
+            {loadingDraft ? "Menyimpan..." : "Simpan Draft"}
           </Button>
-        )}
-        <Button type="submit" disabled={loading} className="gap-2">
-          {loading ? "Menyimpan..." : <><Save className="h-4 w-4" /> Simpan E-Raport</>}
-        </Button>
-      </div>
-    </form>
+          <Button 
+            type="button" 
+            onClick={(e) => handleSubmit(e, true)} 
+            disabled={loadingDraft || loadingPublish} 
+            className="gap-2"
+          >
+            <Send className="h-4 w-4" /> 
+            {loadingPublish ? "Mempublikasi..." : "Publikasikan Raport"}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }
