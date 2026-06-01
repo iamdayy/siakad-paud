@@ -13,6 +13,7 @@
     "prisma:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -71,8 +72,5 @@
   },
   "overrides": {
     "postcss": "8.5.14"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   }
 }

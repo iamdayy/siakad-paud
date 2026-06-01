@@ -2,7 +2,7 @@ import { canAccessPath, SESSION_COOKIE, verifySessionToken } from "@/lib/session
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Static files and public routes
