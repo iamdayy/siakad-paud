@@ -42,7 +42,8 @@ const dataSubMenus = [
   { href: "/guru", label: "Guru & Staf", icon: GraduationCap },
   { href: "/kelas", label: "Data Kelas", icon: BookOpen },
   { href: "/presensi", label: "Presensi", icon: CalendarCheck },
-  { href: "/laporan", label: "Laporan", icon: BarChart3 },
+  { href: "/laporan/daily-report", label: "Laporan Harian", icon: BookOpen },
+  { href: "/laporan/raport", label: "E-Raport", icon: BarChart3 },
   { href: "/keuangan", label: "Keuangan", icon: Wallet },
 ];
 

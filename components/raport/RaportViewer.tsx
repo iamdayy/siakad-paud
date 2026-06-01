@@ -30,7 +30,8 @@ export function RaportViewer({ assessment, studentName }: RaportViewerProps) {
       <div className="rounded-md border p-4 bg-muted/20 text-center">
         <h3 className="text-xl font-bold uppercase tracking-wider text-primary">Laporan Perkembangan Anak</h3>
         <p className="font-semibold text-lg">{studentName}</p>
-        <p className="text-muted-foreground">{assessment.periodLabel}</p>
+        <p className="text-muted-foreground">{assessment.className ? `Kelas: ${assessment.className}` : ""}</p>
+        <p className="text-muted-foreground">Periode: {assessment.periodLabel}</p>
       </div>
 
       <div className="space-y-4">

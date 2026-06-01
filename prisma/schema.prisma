@@ -405,6 +405,7 @@ model Assessment {
   // Catatan umum & rekomendasi guru
   narrative String?
   note      String?
+  className String?
   
   isPublished Boolean @default(false)
 

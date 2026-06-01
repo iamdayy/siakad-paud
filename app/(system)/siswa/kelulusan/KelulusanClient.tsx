@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { processGraduation, processMutation } from "@/app/(system)/actions";
+import { processGraduation, processMutation, processClassTransfer } from "@/app/(system)/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -40,6 +40,7 @@ export function KelulusanClient({ students, classrooms }: { students: any[]; cla
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [openGraduation, setOpenGraduation] = useState(false);
   const [openMutation, setOpenMutation] = useState(false);
+  const [openTransfer, setOpenTransfer] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const filteredStudents = filterClass === "ALL" 
@@ -96,6 +97,22 @@ export function KelulusanClient({ students, classrooms }: { students: any[]; cla
     return res;
   }
 
+  async function handleTransfer(formData: FormData) {
+    if (selectedIds.length === 0) return { success: false, message: "Pilih siswa terlebih dahulu" };
+    setLoading(true);
+    const targetClassroomId = formData.get("targetClassroomId") as string;
+    const res = await processClassTransfer(selectedIds, targetClassroomId === "NONE" ? null : targetClassroomId);
+    setLoading(false);
+    if (res?.success) {
+      toast.success("Berhasil memindahkan siswa ke kelas baru");
+      setSelectedIds([]);
+      setOpenTransfer(false);
+      router.refresh();
+      return { success: true };
+    }
+    return res;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -105,10 +122,10 @@ export function KelulusanClient({ students, classrooms }: { students: any[]; cla
         <div>
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <GraduationCap className="h-6 w-6 text-primary" />
-            Proses Kelulusan & Mutasi
+            Kelulusan, Mutasi & Pindah Kelas
           </h2>
           <p className="text-sm text-muted-foreground">
-            Luluskan siswa di akhir tahun ajaran secara massal.
+            Luluskan, mutasikan, atau naikkan kelas siswa secara massal.
           </p>
         </div>
       </div>
@@ -135,11 +152,19 @@ export function KelulusanClient({ students, classrooms }: { students: any[]; cla
           </span>
           <Button 
             variant="outline" 
-            onClick={() => setOpenMutation(true)} 
+            onClick={() => setOpenTransfer(true)} 
             disabled={selectedIds.length === 0}
             className="gap-2"
           >
-            <ArrowRightLeft className="h-4 w-4" /> Mutasi
+            <ArrowRightLeft className="h-4 w-4" /> Naik / Pindah Kelas
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setOpenMutation(true)} 
+            disabled={selectedIds.length === 0}
+            className="gap-2 text-amber-600 hover:text-amber-700"
+          >
+            Mutasi Keluar
           </Button>
           <Button 
             onClick={() => setOpenGraduation(true)} 
@@ -237,6 +262,40 @@ export function KelulusanClient({ students, classrooms }: { students: any[]; cla
             <div className="flex justify-end gap-2 mt-4">
               <Button type="button" variant="outline" onClick={() => setOpenMutation(false)}>Batal</Button>
               <Button type="submit" variant="destructive" disabled={loading}>{loading ? "Memproses..." : "Mutasi Sekarang"}</Button>
+            </div>
+          </ActionForm>
+        </DialogContent>
+      </Dialog>
+
+      {/* Transfer Class Dialog */}
+      <Dialog open={openTransfer} onOpenChange={setOpenTransfer}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Pindah / Naik Kelas</DialogTitle>
+            <DialogDescription>
+              Pindahkan <strong>{selectedIds.length}</strong> siswa ke kelas tujuan.
+            </DialogDescription>
+          </DialogHeader>
+          <ActionForm action={handleTransfer}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel>Pilih Kelas Tujuan</FieldLabel>
+                <Select name="targetClassroomId" defaultValue="NONE">
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">Keluarkan dari kelas (Tanpa Kelas)</SelectItem>
+                    {classrooms.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name} ({c.level})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            </FieldGroup>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button type="button" variant="outline" onClick={() => setOpenTransfer(false)}>Batal</Button>
+              <Button type="submit" disabled={loading}>{loading ? "Memproses..." : "Pindahkan Sekarang"}</Button>
             </div>
           </ActionForm>
         </DialogContent>

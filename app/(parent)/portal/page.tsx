@@ -190,16 +190,23 @@ async function RaportList({ studentId, studentName }: { studentId: string, stude
       {assessments.map(assessment => (
         <div key={assessment.id} className="flex items-center justify-between border-b pb-2 last:border-0">
           <span className="font-medium text-sm">{assessment.periodLabel}</span>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline" className="gap-2">
-                <FileText className="h-4 w-4" /> Lihat Raport
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
-              <RaportViewer assessment={assessment} studentName={studentName} />
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" className="gap-2">
+                  <FileText className="h-4 w-4" /> Lihat Raport
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+                <RaportViewer assessment={assessment} studentName={studentName} />
+              </DialogContent>
+            </Dialog>
+            <Button size="sm" variant="outline" asChild>
+              <a href={`/raport/${assessment.id}/print`} target="_blank">
+                Cetak
+              </a>
+            </Button>
+          </div>
         </div>
       ))}
     </div>

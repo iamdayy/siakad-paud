@@ -105,7 +105,7 @@ export default async function PrintRaportPage({ params }: { params: Promise<{ id
                 <tr>
                   <td className="w-32 py-1">Kelas / Kelompok</td>
                   <td className="w-4">:</td>
-                  <td>{student.classroom?.name || "-"} ({student.classroom?.level || "-"})</td>
+                  <td>{assessment.className || student.classroom?.name || "-"}</td>
                 </tr>
                 <tr>
                   <td className="py-1">Tahun Ajaran</td>

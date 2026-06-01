@@ -3,6 +3,7 @@ import { getStudentById } from "@/lib/data";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Calendar, BookOpen, Wallet, Activity } from "lucide-react";
 import { EditStudentForm } from "./edit-form";
@@ -150,9 +151,16 @@ export default async function SiswaProfilePage({ params }: { params: Promise<{ i
                     <div key={ass.id} className="rounded-lg border p-4">
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-semibold">{ass.periodLabel}</span>
-                        <Badge variant={ass.isPublished ? "default" : "secondary"}>
-                          {ass.isPublished ? "Diterbitkan" : "Draft"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={ass.isPublished ? "default" : "secondary"}>
+                            {ass.isPublished ? "Diterbitkan" : "Draft"}
+                          </Badge>
+                          <Button size="sm" variant="outline" asChild>
+                            <a href={`/raport/${ass.id}/print`} target="_blank">
+                              Cetak
+                            </a>
+                          </Button>
+                        </div>
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2">{ass.narrative}</p>
                     </div>

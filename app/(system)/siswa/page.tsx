@@ -95,7 +95,7 @@ export default async function SiswaPage() {
             <Button variant="outline" asChild className="gap-2">
               <Link href="/siswa/kelulusan">
                 <GraduationCap className="h-4 w-4" />
-                Kelulusan & Mutasi
+                Kelulusan, Mutasi & Pindah Kelas
               </Link>
             </Button>
             <Dialog>

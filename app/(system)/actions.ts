@@ -1166,6 +1166,13 @@ export async function createAssessment(formData: FormData) {
   }
 
   try {
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      include: { classroom: true }
+    });
+    
+    const className = student?.classroom?.name || null;
+
     await prisma.assessment.upsert({
       where: {
         studentId_periodLabel: { studentId, periodLabel },
@@ -1187,6 +1194,7 @@ export async function createAssessment(formData: FormData) {
         narasiSeni: narasiSeni || null,
         narrative: narrative || null,
         note: note || null,
+        className,
         isPublished,
       },
       update: {
@@ -1204,6 +1212,7 @@ export async function createAssessment(formData: FormData) {
         narasiSeni: narasiSeni || null,
         narrative: narrative || null,
         note: note || null,
+        className,
         isPublished,
       },
     });
@@ -1479,6 +1488,27 @@ export async function processMutation(studentIds: string[], outDate: Date) {
     return { success: true };
   } catch (err: any) {
     console.error("processMutation failed", err);
+    return { success: false, message: err.message };
+  }
+}
+
+export async function processClassTransfer(studentIds: string[], targetClassroomId: string | null) {
+  await requireActionAccess(adminAndTu);
+  if (!studentIds.length) return { success: false, message: "Tidak ada siswa yang dipilih" };
+
+  try {
+    await prisma.student.updateMany({
+      where: { id: { in: studentIds } },
+      data: {
+        classroomId: targetClassroomId,
+      },
+    });
+    revalidatePath(`/siswa`);
+    revalidatePath(`/siswa/kelulusan`);
+    revalidatePath(`/kelas`);
+    return { success: true };
+  } catch (err: any) {
+    console.error("processClassTransfer failed", err);
     return { success: false, message: err.message };
   }
 }
