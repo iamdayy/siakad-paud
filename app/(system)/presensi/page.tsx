@@ -37,6 +37,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { requirePageAccess, getCurrentUser } from "@/lib/auth";
 import { getAttendanceLogs, getStudents } from "@/lib/data";
+import { SearchBar } from "@/components/data-table/search-bar";
+import { Pagination } from "@/components/data-table/pagination";
 import {
   CalendarCheck,
   UserCheck,
@@ -66,15 +68,26 @@ function statusColor(status: string) {
   }
 }
 
-export default async function PresensiPage() {
+export default async function PresensiPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    query?: string;
+    page?: string;
+  }>;
+}) {
   await requirePageAccess("/presensi", ["ADMIN", "TU", "GURU"]);
 
   const user = await getCurrentUser();
   const teacherId = user?.role === "GURU" && user.teacherId ? user.teacherId : undefined;
 
+  const resolvedParams = await searchParams;
+  const query = resolvedParams?.query || "";
+  const page = Number(resolvedParams?.page) || 1;
+
   const [logs, students] = await Promise.all([
-    getAttendanceLogs(teacherId),
-    getStudents(teacherId),
+    getAttendanceLogs({ teacherId, search: query, page: page, limit: 10 }),
+    getStudents({ teacherId, limit: 1000 }),
   ]);
 
   // Count today's stats
@@ -217,15 +230,18 @@ export default async function PresensiPage() {
 
       {/* Log Table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex items-center gap-2">
             <CalendarCheck className="h-5 w-5 text-primary" />
             <div>
               <CardTitle>Log Presensi Terbaru</CardTitle>
               <CardDescription>
-                30 entri presensi terakhir dari seluruh kelas.
+                Daftar entri presensi dari seluruh kelas.
               </CardDescription>
             </div>
+          </div>
+          <div className="w-full md:w-64">
+            <SearchBar placeholder="Cari siswa..." />
           </div>
         </CardHeader>
         <CardContent>
@@ -278,6 +294,9 @@ export default async function PresensiPage() {
                 )}
               </TableBody>
             </Table>
+          </div>
+          <div className="mt-4">
+            <Pagination totalPages={logs.totalPages || 0} />
           </div>
         </CardContent>
       </Card>

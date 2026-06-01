@@ -47,17 +47,34 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { requirePageAccess } from "@/lib/auth";
-import { getGuardians } from "@/lib/data";
+import { getParents } from "@/lib/data";
+import { SearchBar } from "@/components/data-table/search-bar";
+import { Pagination } from "@/components/data-table/pagination";
 import { Users, UserPlus, Eye, Edit, MoreHorizontal, Trash } from "lucide-react";
 import Link from "next/link";
 import { EditParentForm } from "./[id]/edit-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function OrangTuaPage() {
+export default async function OrangTuaPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    query?: string;
+    page?: string;
+  }>;
+}) {
   await requirePageAccess("/orangtua", ["ADMIN", "TU", "KEPALA_SEKOLAH"]);
 
-  const guardians = await getGuardians();
+  const resolvedParams = await searchParams;
+  const query = resolvedParams?.query || "";
+  const page = Number(resolvedParams?.page) || 1;
+
+  const guardians = await getParents({
+    search: query,
+    page: page,
+    limit: 10,
+  });
 
   const handleCreate = async (formData: FormData) => {
     "use server";
@@ -124,9 +141,14 @@ export default async function OrangTuaPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Data Orang Tua</CardTitle>
-          <CardDescription>Informasi kontak dan relasi ke siswa.</CardDescription>
+        <CardHeader className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div>
+            <CardTitle>Data Orang Tua</CardTitle>
+            <CardDescription>Informasi kontak dan relasi ke siswa.</CardDescription>
+          </div>
+          <div className="w-full md:w-72">
+            <SearchBar placeholder="Cari nama atau nomor..." />
+          </div>
         </CardHeader>
         <CardContent>
           {!guardians.dbReady && (
@@ -222,6 +244,9 @@ export default async function OrangTuaPage() {
                 )}
               </TableBody>
             </Table>
+          </div>
+          <div className="mt-4">
+            <Pagination totalPages={guardians.totalPages || 0} />
           </div>
         </CardContent>
       </Card>

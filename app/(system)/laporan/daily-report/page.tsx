@@ -26,7 +26,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { requirePageAccess, getCurrentUser } from "@/lib/auth";
-import { getReportsSnapshot, getStudents } from "@/lib/data";
+import { getDailyReports, getStudents } from "@/lib/data";
+import { SearchBar } from "@/components/data-table/search-bar";
+import { Pagination } from "@/components/data-table/pagination";
 import {
   BookOpen,
   Plus,
@@ -41,7 +43,14 @@ function toDateInput(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-export default async function DailyReportPage() {
+export default async function DailyReportPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    query?: string;
+    page?: string;
+  }>;
+}) {
   await requirePageAccess("/laporan", [
     "ADMIN",
     "TU",
@@ -52,9 +61,13 @@ export default async function DailyReportPage() {
   const user = await getCurrentUser();
   const teacherId = user?.role === "GURU" && user.teacherId ? user.teacherId : undefined;
 
+  const resolvedParams = await searchParams;
+  const query = resolvedParams?.query || "";
+  const page = Number(resolvedParams?.page) || 1;
+
   const [data, students] = await Promise.all([
-    getReportsSnapshot(teacherId),
-    getStudents(teacherId),
+    getDailyReports({ teacherId, search: query, page: page, limit: 10 }),
+    getStudents({ teacherId, limit: 1000 }),
   ]);
 
   return (
@@ -197,6 +210,9 @@ export default async function DailyReportPage() {
                 </DialogContent>
               </Dialog>
             </div>
+            <div className="mt-4 w-full md:w-64">
+              <SearchBar placeholder="Cari laporan..." />
+            </div>
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
@@ -242,6 +258,9 @@ export default async function DailyReportPage() {
                 </li>
               )}
             </ul>
+            <div className="mt-4">
+              <Pagination totalPages={data.totalPages || 0} />
+            </div>
           </CardContent>
         </Card>
       </div>

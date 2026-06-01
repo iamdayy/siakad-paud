@@ -47,6 +47,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { requirePageAccess } from "@/lib/auth";
 import { getExpenses, getFinanceSnapshot, getStudents, getClassrooms } from "@/lib/data";
+import { SearchBar } from "@/components/data-table/search-bar";
+import { Pagination } from "@/components/data-table/pagination";
 import { Banknote, CreditCard, DollarSign, Wallet, Users } from "lucide-react";
 import { CronTriggerButton } from "./cron-trigger-button";
 
@@ -70,13 +72,24 @@ function statusBadgeVariant(status: string) {
   return "outline";
 }
 
-export default async function KeuanganPage() {
+export default async function KeuanganPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    query?: string;
+    page?: string;
+  }>;
+}) {
   await requirePageAccess("/keuangan", ["ADMIN", "TU"]);
 
-  const finance = await getFinanceSnapshot();
-  const students = await getStudents();
+  const resolvedParams = await searchParams;
+  const query = resolvedParams?.query || "";
+  const page = Number(resolvedParams?.page) || 1;
+
+  const finance = await getFinanceSnapshot({ search: query, page, limit: 10 });
+  const students = await getStudents({ limit: 1000 });
   const classrooms = await getClassrooms();
-  const expenses = await getExpenses();
+  const expenses = await getExpenses({ search: query, page, limit: 10 });
 
   const balance = finance.revenue - finance.totalExpenses;
 
@@ -447,11 +460,16 @@ export default async function KeuanganPage() {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Daftar Invoice Terakhir</CardTitle>
-                <CardDescription>
-                  Daftar tagihan, status pembayaran, dan aksi edit/hapus.
-                </CardDescription>
+              <CardHeader className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div>
+                  <CardTitle>Daftar Invoice Terakhir</CardTitle>
+                  <CardDescription>
+                    Daftar tagihan, status pembayaran, dan aksi edit/hapus.
+                  </CardDescription>
+                </div>
+                <div className="w-full md:w-64">
+                  <SearchBar placeholder="Cari invoice/siswa..." />
+                </div>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -546,6 +564,9 @@ export default async function KeuanganPage() {
                     )}
                   </TableBody>
                 </Table>
+                <div className="mt-4">
+                  <Pagination totalPages={finance.totalPages || 0} />
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -554,13 +575,14 @@ export default async function KeuanganPage() {
         {/* TAB PENGELUARAN */}
         <TabsContent value="pengeluaran" className="space-y-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Data Pengeluaran Operasional</CardTitle>
-                <CardDescription>
-                  Catat semua biaya operasional, gaji, dan belanja sekolah.
-                </CardDescription>
-              </div>
+            <CardHeader className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div className="flex items-center justify-between w-full">
+                <div>
+                  <CardTitle>Data Pengeluaran Operasional</CardTitle>
+                  <CardDescription>
+                    Catat semua biaya operasional, gaji, dan belanja sekolah.
+                  </CardDescription>
+                </div>
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="destructive" className="bg-red-600 hover:bg-red-700">Catat Pengeluaran Baru</Button>
@@ -634,6 +656,10 @@ export default async function KeuanganPage() {
                   </ActionForm>
                 </DialogContent>
               </Dialog>
+              </div>
+              <div className="w-full md:w-64">
+                <SearchBar placeholder="Cari pengeluaran..." />
+              </div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -681,6 +707,9 @@ export default async function KeuanganPage() {
                   )}
                 </TableBody>
               </Table>
+              <div className="mt-4">
+                <Pagination totalPages={expenses.totalPages || 0} />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

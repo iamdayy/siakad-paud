@@ -127,46 +127,100 @@ export async function getDashboardStats() {
   }
 }
 
-export async function getAdmissions() {
+export async function getAdmissions(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}) {
   try {
-    return {
-      dbReady: true,
-      rows: await prisma.admission.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 20,
-      }),
+    const { page = 1, limit = 10, search, status } = params || {};
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      ...(status && { status: status as any }),
+      ...(search && {
+        OR: [
+          { childName: { contains: search, mode: 'insensitive' } },
+          { registrationNumber: { contains: search, mode: 'insensitive' } },
+        ]
+      })
     };
+
+    const [total, rows] = await Promise.all([
+      prisma.admission.count({ where }),
+      prisma.admission.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      })
+    ]);
+
+    return { dbReady: true, rows, total, totalPages: Math.ceil(total / limit) };
   } catch {
-    return { dbReady: false, rows: [] };
+    return { dbReady: false, rows: [], total: 0, totalPages: 0 };
   }
 }
 
-export async function getStudents(teacherId?: string) {
+export async function getStudents(params?: {
+  teacherId?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}) {
   try {
-    const rows = await prisma.student.findMany({
-      where: teacherId ? {
+    const { teacherId, page = 1, limit = 10, search, status } = params || {};
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      ...(teacherId && {
         classroom: {
           OR: [
             { mainTeacherId: teacherId },
             { coTeacherId: teacherId },
           ]
         }
-      } : undefined,
-      include: { classroom: true, parent: true },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    });
+      }),
+      ...(status && { status: status as any }),
+      ...(search && {
+        OR: [
+          { fullName: { contains: search, mode: 'insensitive' } },
+          { nis: { contains: search, mode: 'insensitive' } },
+        ]
+      })
+    };
 
-    return { dbReady: true, rows };
+    const [total, rows] = await Promise.all([
+      prisma.student.count({ where }),
+      prisma.student.findMany({
+        where,
+        include: { classroom: true, parent: true },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      })
+    ]);
+
+    return { dbReady: true, rows, total, totalPages: Math.ceil(total / limit) };
   } catch {
-    return { dbReady: false, rows: [] };
+    return { dbReady: false, rows: [], total: 0, totalPages: 0 };
   }
 }
 
-export async function getAttendanceLogs(teacherId?: string) {
+export async function getAttendanceLogs(params?: {
+  teacherId?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+}) {
   try {
-    const rows = await prisma.attendance.findMany({
-      where: teacherId ? {
+    const { teacherId, page = 1, limit = 10, search } = params || {};
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      ...(teacherId && {
         student: {
           classroom: {
             OR: [
@@ -175,11 +229,24 @@ export async function getAttendanceLogs(teacherId?: string) {
             ]
           }
         }
-      } : undefined,
-      include: { student: true },
-      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-      take: 30,
-    });
+      }),
+      ...(search && {
+        student: {
+          fullName: { contains: search, mode: 'insensitive' }
+        }
+      })
+    };
+
+    const [total, rows] = await Promise.all([
+      prisma.attendance.count({ where }),
+      prisma.attendance.findMany({
+        where,
+        include: { student: true },
+        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+        skip,
+        take: limit,
+      })
+    ]);
 
     return {
       dbReady: true,
@@ -191,23 +258,46 @@ export async function getAttendanceLogs(teacherId?: string) {
         rawStatus: item.status,
         note: item.note,
       })),
+      total,
+      totalPages: Math.ceil(total / limit)
     };
   } catch {
-    return { dbReady: false, rows: [] };
+    return { dbReady: false, rows: [], total: 0, totalPages: 0 };
   }
 }
 
-export async function getFinanceSnapshot() {
+export async function getFinanceSnapshot(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}) {
   try {
+    const { page = 1, limit = 10, search, status } = params || {};
+    const skip = (page - 1) * limit;
+
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
 
-    const [invoices, payments, expenses, monthlyExpenses] = await Promise.all([
+    const where: any = {
+      ...(status && { status: status as any }),
+      ...(search && {
+        OR: [
+          { code: { contains: search, mode: 'insensitive' } },
+          { student: { fullName: { contains: search, mode: 'insensitive' } } },
+        ]
+      })
+    };
+
+    const [totalInvoices, invoices, payments, expenses, monthlyExpenses] = await Promise.all([
+      prisma.invoice.count({ where }),
       prisma.invoice.findMany({
+        where,
         include: { student: true, payments: true },
         orderBy: { createdAt: "desc" },
-        take: 20,
+        skip,
+        take: limit,
       }),
       prisma.payment.aggregate({ _sum: { amount: true } }),
       prisma.expense.aggregate({ _sum: { amount: true } }),
@@ -246,50 +336,80 @@ export async function getFinanceSnapshot() {
           status: mapInvoiceLabel(item.status),
         };
       }),
+      total: totalInvoices,
+      totalPages: Math.ceil(totalInvoices / limit)
     };
   } catch {
-    return { dbReady: false, revenue: 0, totalExpenses: 0, monthlyExpenses: 0, rows: [] };
+    return { dbReady: false, revenue: 0, totalExpenses: 0, monthlyExpenses: 0, rows: [], total: 0, totalPages: 0 };
   }
 }
 
-export async function getExpenses() {
+export async function getExpenses(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}) {
   try {
-    const rows = await prisma.expense.findMany({
-      orderBy: { date: "desc" },
-      take: 30,
-    });
-    return { dbReady: true, rows };
+    const { page = 1, limit = 10, search } = params || {};
+    const skip = (page - 1) * limit;
+
+    const where: any = search ? {
+      OR: [
+        { title: { contains: search, mode: 'insensitive' } },
+        { category: { contains: search, mode: 'insensitive' } },
+      ]
+    } : {};
+
+    const [total, rows] = await Promise.all([
+      prisma.expense.count({ where }),
+      prisma.expense.findMany({
+        where,
+        orderBy: { date: "desc" },
+        skip,
+        take: limit,
+      })
+    ]);
+    return { dbReady: true, rows, total, totalPages: Math.ceil(total / limit) };
   } catch {
-    return { dbReady: false, rows: [] };
+    return { dbReady: false, rows: [], total: 0, totalPages: 0 };
   }
 }
 
-export async function getReportsSnapshot(teacherId?: string) {
+export async function getDailyReports(params?: {
+  teacherId?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+}) {
   try {
-    const studentFilter = teacherId ? {
-      student: {
-        classroom: {
-          OR: [
-            { mainTeacherId: teacherId },
-            { coTeacherId: teacherId },
-          ]
-        }
-      }
-    } : undefined;
+    const { teacherId, page = 1, limit = 10, search } = params || {};
+    const skip = (page - 1) * limit;
 
-    const [reports, assessments] = await Promise.all([
+    const where: any = {
+      ...(teacherId && {
+        student: {
+          classroom: {
+            OR: [
+              { mainTeacherId: teacherId },
+              { coTeacherId: teacherId },
+            ]
+          }
+        }
+      }),
+      ...(search && {
+        student: { fullName: { contains: search, mode: 'insensitive' } }
+      })
+    };
+
+    const [total, reports] = await Promise.all([
+      prisma.dailyReport.count({ where }),
       prisma.dailyReport.findMany({
-        where: studentFilter,
+        where,
         include: { student: true },
         orderBy: { reportDate: "desc" },
-        take: 12,
-      }),
-      prisma.assessment.findMany({
-        where: studentFilter,
-        include: { student: true },
-        orderBy: { createdAt: "desc" },
-        take: 12,
-      }),
+        skip,
+        take: limit,
+      })
     ]);
 
     return {
@@ -303,6 +423,53 @@ export async function getReportsSnapshot(teacherId?: string) {
         mood: item.mood,
         activities: item.activities,
       })),
+      total,
+      totalPages: Math.ceil(total / limit)
+    };
+  } catch {
+    return { dbReady: false, reports: [], total: 0, totalPages: 0 };
+  }
+}
+
+export async function getAssessments(params?: {
+  teacherId?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+}) {
+  try {
+    const { teacherId, page = 1, limit = 10, search } = params || {};
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      ...(teacherId && {
+        student: {
+          classroom: {
+            OR: [
+              { mainTeacherId: teacherId },
+              { coTeacherId: teacherId },
+            ]
+          }
+        }
+      }),
+      ...(search && {
+        student: { fullName: { contains: search, mode: 'insensitive' } }
+      })
+    };
+
+    const [total, assessments] = await Promise.all([
+      prisma.assessment.count({ where }),
+      prisma.assessment.findMany({
+        where,
+        include: { student: true },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      })
+    ]);
+
+    return {
+      dbReady: true,
       assessments: assessments.map((item) => ({
         id: item.id,
         studentName: item.student.fullName,
@@ -316,68 +483,127 @@ export async function getReportsSnapshot(teacherId?: string) {
         narrative: item.narrative,
         isPublished: item.isPublished,
       })),
+      total,
+      totalPages: Math.ceil(total / limit)
     };
   } catch {
-    return { dbReady: false, reports: [], assessments: [] };
+    return { dbReady: false, assessments: [], total: 0, totalPages: 0 };
   }
 }
 
-export async function getTeachers() {
+export async function getTeachers(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}) {
   try {
-    const rows = await prisma.teacher.findMany({
-      include: {
-        mainClassrooms: true,
-        coClassrooms: true,
-      },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    });
-    return { dbReady: true, rows };
+    const { page = 1, limit = 10, search } = params || {};
+    const skip = (page - 1) * limit;
+
+    const where: any = search ? {
+      OR: [
+        { fullName: { contains: search, mode: 'insensitive' } },
+        { nip: { contains: search, mode: 'insensitive' } },
+      ]
+    } : {};
+
+    const [total, rows] = await Promise.all([
+      prisma.teacher.count({ where }),
+      prisma.teacher.findMany({
+        where,
+        include: {
+          mainClassrooms: true,
+          coClassrooms: true,
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      })
+    ]);
+    return { dbReady: true, rows, total, totalPages: Math.ceil(total / limit) };
   } catch {
-    return { dbReady: false, rows: [] };
+    return { dbReady: false, rows: [], total: 0, totalPages: 0 };
   }
 }
 
-export async function getGuardians() {
+export async function getParents(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}) {
   try {
-    const parents = await prisma.parent.findMany({
-      include: {
-        students: { select: { fullName: true } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    });
+    const { page = 1, limit = 10, search } = params || {};
+    const skip = (page - 1) * limit;
 
-    return {
-      dbReady: true,
-      rows: parents.map((p) => ({
+    const where: any = search ? {
+      OR: [
+        { fatherName: { contains: search, mode: 'insensitive' } },
+        { motherName: { contains: search, mode: 'insensitive' } },
+        { whatsapp: { contains: search, mode: 'insensitive' } },
+      ]
+    } : {};
+
+    const [total, parents] = await Promise.all([
+      prisma.parent.count({ where }),
+      prisma.parent.findMany({
+        where,
+        include: {
+          students: { select: { fullName: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      })
+    ]);
+    return { 
+      dbReady: true, 
+      rows: parents.map((p: any) => ({
         id: p.id,
         fatherName: p.fatherName,
         motherName: p.motherName,
         whatsapp: p.whatsapp,
         phone: p.phone,
         address: p.address,
-        children: p.students.map((s) => s.fullName),
+        children: p.students.map((s: any) => s.fullName),
       })),
+      total,
+      totalPages: Math.ceil(total / limit)
     };
   } catch {
-    return { dbReady: false, rows: [] };
+    return { dbReady: false, rows: [], total: 0, totalPages: 0 };
   }
 }
 
-export async function getClassrooms() {
+export async function getClassrooms(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}) {
   try {
-    const rows = await prisma.classroom.findMany({
-      include: {
-        mainTeacher: true,
-        coTeacher: true,
-        _count: { select: { students: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-    return { dbReady: true, rows };
+    const { page = 1, limit = 10, search } = params || {};
+    const skip = (page - 1) * limit;
+
+    const where: any = search ? {
+      name: { contains: search, mode: 'insensitive' }
+    } : {};
+
+    const [total, rows] = await Promise.all([
+      prisma.classroom.count({ where }),
+      prisma.classroom.findMany({
+        where,
+        include: {
+          mainTeacher: true,
+          coTeacher: true,
+          _count: { select: { students: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      })
+    ]);
+    return { dbReady: true, rows, total, totalPages: Math.ceil(total / limit) };
   } catch {
-    return { dbReady: false, rows: [] };
+    return { dbReady: false, rows: [], total: 0, totalPages: 0 };
   }
 }
 

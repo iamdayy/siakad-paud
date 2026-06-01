@@ -58,14 +58,31 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { requirePageAccess } from "@/lib/auth";
 import { getTeachers } from "@/lib/data";
+import { SearchBar } from "@/components/data-table/search-bar";
+import { Pagination } from "@/components/data-table/pagination";
 import { Eye, Plus, UserCheck, MoreHorizontal, Edit, Trash, GraduationCap, UserPlus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function GuruPage() {
+export default async function GuruPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    query?: string;
+    page?: string;
+  }>;
+}) {
   await requirePageAccess("/guru", ["ADMIN", "TU"]);
 
-  const teachers = await getTeachers();
+  const resolvedParams = await searchParams;
+  const query = resolvedParams?.query || "";
+  const page = Number(resolvedParams?.page) || 1;
+
+  const teachers = await getTeachers({
+    search: query,
+    page: page,
+    limit: 10,
+  });
 
   return (
     <section className="space-y-6">
@@ -142,6 +159,11 @@ export default async function GuruPage() {
       </div>
 
       <Card>
+        <CardHeader className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div className="w-full md:w-72">
+            <SearchBar placeholder="Cari nama atau nip..." />
+          </div>
+        </CardHeader>
         <CardContent className="pt-6">
           {!teachers.dbReady && (
             <p className="mb-4 rounded-xl border border-dashed border-amber-300 bg-amber-100/60 px-3 py-2 text-sm text-amber-900">
@@ -310,6 +332,9 @@ export default async function GuruPage() {
               )}
             </TableBody>
           </Table>
+          <div className="mt-4">
+            <Pagination totalPages={teachers.totalPages || 0} />
+          </div>
         </CardContent>
       </Card>
     </section>

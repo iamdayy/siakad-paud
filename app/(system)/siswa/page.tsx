@@ -56,6 +56,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { requirePageAccess } from "@/lib/auth";
 import { getStudents } from "@/lib/data";
+import { SearchBar } from "@/components/data-table/search-bar";
+import { Pagination } from "@/components/data-table/pagination";
 import { Users, UserPlus, Eye, Edit, MoreHorizontal, Trash, GraduationCap } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -71,10 +73,25 @@ function studentBadgeColor(status: string) {
   return "destructive";
 }
 
-export default async function SiswaPage() {
+export default async function SiswaPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    query?: string;
+    page?: string;
+  }>;
+}) {
   await requirePageAccess("/siswa", ["ADMIN", "KEPALA_SEKOLAH", "TU"]);
 
-  const students = await getStudents();
+  const resolvedParams = await searchParams;
+  const query = resolvedParams?.query || "";
+  const page = Number(resolvedParams?.page) || 1;
+
+  const students = await getStudents({
+    search: query,
+    page: page,
+    limit: 10,
+  });
 
   return (
     <section className="space-y-6">
@@ -183,11 +200,16 @@ export default async function SiswaPage() {
 
       {/* Student Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Data Siswa</CardTitle>
-          <CardDescription>
-            Daftar siswa beserta informasi wali dan kelas.
-          </CardDescription>
+        <CardHeader className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div>
+            <CardTitle>Data Siswa</CardTitle>
+            <CardDescription>
+              Daftar siswa beserta informasi wali dan kelas.
+            </CardDescription>
+          </div>
+          <div className="w-full md:w-72">
+            <SearchBar placeholder="Cari nama atau NIS..." />
+          </div>
         </CardHeader>
         <CardContent>
           {!students.dbReady && (
@@ -347,6 +369,9 @@ export default async function SiswaPage() {
                 )}
               </TableBody>
             </Table>
+          </div>
+          <div className="mt-4">
+            <Pagination totalPages={students.totalPages || 0} />
           </div>
         </CardContent>
       </Card>

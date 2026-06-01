@@ -292,7 +292,7 @@ export async function approveAdmission(formData: FormData) {
       // Send notification to parent
       await sendWhatsAppNotification(
         admission.whatsapp,
-        `*PEMBERITAHUAN PENERIMAAN SISWA BARU*\n\nYth. Bapak/Ibu Orang Tua dari Ananda ${admission.childName},\n\nSelamat! Kami informasikan bahwa pendaftaran Ananda telah *DISETUJUI*.\n\nUntuk langkah selanjutnya, silakan masuk ke Portal Orang Tua menggunakan kredensial berikut:\n👤 Username: ${admission.whatsapp}\n🔑 Password: ${admission.whatsapp}\n\nMohon segera melunasi tagihan Uang Pangkal yang tersedia di portal. Nomor Induk Siswa (NIS) resmi Ananda akan diterbitkan secara otomatis setelah pembayaran terverifikasi.\n\nTerima kasih atas kepercayaan Bapak/Ibu kepada institusi kami.\n\nHormat kami,\nManajemen PAUD/TK`,
+        `Assalamualaikum wr. wb. / Selamat Pagi/Siang,\n\nYth. Bapak/Ibu Orang Tua/Wali dari Ananda *${admission.childName}*,\n\nSalam sejahtera. Melalui pesan ini, kami dari *Manajemen PAUD Ceria Bintang* dengan sukacita menginformasikan bahwa pendaftaran Ananda telah kami *TERIMA/DISETUJUI*.\n\nUntuk langkah selanjutnya, silakan mengakses Portal Orang Tua Sistem Informasi Akademik (SIAKAD) PAUD melalui situs web sekolah kami menggunakan detail akun berikut:\n👤 Username: ${admission.whatsapp}\n🔑 Password: ${admission.whatsapp}\n\nMohon berkenan untuk mengecek dan melunasi tagihan biaya awal pendidikan (Uang Pangkal) yang tertera di dalam portal. Nomor Induk Siswa (NIS) resmi Ananda akan diterbitkan secara otomatis setelah pembayaran diverifikasi oleh sistem.\n\nTerima kasih atas kepercayaan Bapak/Ibu yang telah memilih PAUD Ceria Bintang sebagai mitra pendidikan Ananda.\n\nWassalamualaikum wr. wb. / Salam hangat,\n*Manajemen PAUD Ceria Bintang*`,
       );
     });
 
@@ -326,7 +326,7 @@ export async function rejectAdmission(formData: FormData) {
     if (admission) {
       await sendWhatsAppNotification(
         admission.whatsapp,
-        `*PEMBERITAHUAN PENERIMAAN SISWA BARU*\n\nYth. Bapak/Ibu Orang Tua dari Ananda ${admission.childName},\n\nTerima kasih atas minat dan kepercayaan Bapak/Ibu untuk mendaftarkan Ananda di institusi kami.\n\nDengan berat hati kami menyampaikan bahwa pada kesempatan kali ini, pendaftaran Ananda *BELUM DAPAT DITERIMA* karena alasan berikut:\n_${reason || "Kuota kelas telah penuh / Tidak memenuhi persyaratan administrasi"}_\n\nApabila Bapak/Ibu membutuhkan informasi lebih lanjut, silakan menghubungi pihak administrasi sekolah. Kami mendoakan yang terbaik untuk pendidikan Ananda.\n\nHormat kami,\nManajemen PAUD/TK`,
+        `Assalamualaikum wr. wb. / Selamat Pagi/Siang,\n\nYth. Bapak/Ibu Orang Tua/Wali dari Ananda *${admission.childName}*,\n\nSebelumnya kami mengucapkan terima kasih yang sebesar-besarnya atas minat dan kepercayaan Bapak/Ibu mendaftarkan Ananda di *PAUD Ceria Bintang*.\n\nMelalui pesan ini, dengan berat hati kami harus menyampaikan bahwa pada kesempatan ini pendaftaran Ananda *BELUM DAPAT KAMI TERIMA*. Adapun pertimbangannya adalah sebagai berikut:\n_${reason || "Kuota kelas telah terpenuhi atau persyaratan administrasi belum memenuhi ketentuan"}_\n\nApabila Bapak/Ibu memerlukan informasi lebih lanjut, silakan menghubungi pihak administrasi kami. Kami senantiasa mendoakan yang terbaik untuk tumbuh kembang dan pendidikan Ananda di masa depan.\n\nWassalamualaikum wr. wb. / Salam hormat,\n*Manajemen PAUD Ceria Bintang*`,
       );
     }
 
@@ -840,7 +840,7 @@ export async function recordPayment(formData: FormData) {
         if (invoice.student.parent?.whatsapp) {
           await sendWhatsAppNotification(
             invoice.student.parent.whatsapp,
-            `*KONFIRMASI PEMBAYARAN BERHASIL*\n\nYth. Bapak/Ibu Orang Tua dari Ananda ${invoice.student.fullName},\n\nTerima kasih, pembayaran Uang Pangkal Ananda telah kami terima dan verifikasi secara penuh.\n\nBerikut adalah Nomor Induk Siswa (NIS) resmi Ananda:\n*${newNis}*\n\nSelamat bergabung di keluarga besar kami! Jika ada pertanyaan lebih lanjut, silakan hubungi administrasi sekolah.\n\nHormat kami,\nBagian Keuangan PAUD/TK`,
+            `Assalamualaikum wr. wb. / Selamat Pagi/Siang,\n\nYth. Bapak/Ibu Orang Tua/Wali dari Ananda *${invoice.student.fullName}*,\n\nTerima kasih. Sistem kami telah menerima dan memverifikasi pembayaran tagihan pendidikan Ananda secara penuh.\n\nBersama pesan ini, kami sampaikan Nomor Induk Siswa (NIS) resmi Ananda:\n*${newNis}*\n\nSelamat bergabung di keluarga besar PAUD Ceria Bintang! Jika Bapak/Ibu memiliki pertanyaan lebih lanjut, jangan ragu untuk menghubungi layanan administrasi kami.\n\nWassalamualaikum wr. wb. / Salam hangat,\n*Bagian Keuangan PAUD Ceria Bintang*`,
           );
         }
       }
@@ -984,7 +984,7 @@ export async function recordAttendance(formData: FormData) {
       if (student?.parent?.whatsapp) {
         await sendWhatsAppNotification(
           student.parent.whatsapp,
-          `*INFO KEHADIRAN SISWA*\n\nYth. Bapak/Ibu Orang Tua,\n\nKami menginformasikan bahwa Ananda *${student.nickName || student.fullName}* telah tiba di sekolah dengan selamat pada hari ini, ${date.toLocaleDateString("id-ID", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.\n\nTerima kasih,\nSistem Presensi PAUD/TK`,
+          `Assalamualaikum wr. wb. / Selamat Pagi,\n\nYth. Bapak/Ibu Orang Tua/Wali,\n\nSebagai bagian dari komitmen kami terhadap keamanan dan kenyamanan Ananda, kami menginformasikan bahwa Ananda *${student.nickName || student.fullName}* telah tiba di sekolah dengan selamat pada hari ini, ${date.toLocaleDateString("id-ID", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.\n\nSemoga Ananda dapat mengikuti kegiatan belajar dan bermain hari ini dengan penuh kegembiraan.\n\nWassalamualaikum wr. wb. / Salam hangat,\n*Sistem Informasi Presensi - PAUD Ceria Bintang*`,
         );
       }
     }
@@ -1063,7 +1063,7 @@ export async function recordBulkAttendance(formData: FormData) {
         if (student.parent?.whatsapp) {
           await sendWhatsAppNotification(
             student.parent.whatsapp,
-            `*INFO KEHADIRAN SISWA*\n\nYth. Bapak/Ibu Orang Tua,\n\nKami menginformasikan bahwa Ananda *${student.nickName || student.fullName}* telah tiba di sekolah dengan selamat pada hari ini, ${date.toLocaleDateString("id-ID", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.\n\nTerima kasih,\nSistem Presensi PAUD/TK`,
+            `Assalamualaikum wr. wb. / Selamat Pagi,\n\nYth. Bapak/Ibu Orang Tua/Wali,\n\nSebagai bagian dari komitmen kami terhadap keamanan dan kenyamanan Ananda, kami menginformasikan bahwa Ananda *${student.nickName || student.fullName}* telah tiba di sekolah dengan selamat pada hari ini, ${date.toLocaleDateString("id-ID", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.\n\nSemoga Ananda dapat mengikuti kegiatan belajar dan bermain hari ini dengan penuh kegembiraan.\n\nWassalamualaikum wr. wb. / Salam hangat,\n*Sistem Informasi Presensi - PAUD Ceria Bintang*`,
           );
         }
       }

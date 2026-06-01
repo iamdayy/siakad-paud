@@ -59,24 +59,33 @@ import {
 } from "@/components/ui/table";
 import { requirePageAccess } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getClassrooms } from "@/lib/data";
+import { SearchBar } from "@/components/data-table/search-bar";
+import { Pagination } from "@/components/data-table/pagination";
 import { Library, Users, ShieldAlert, MoreHorizontal, Trash, Calendar } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default async function KelasPage() {
+export default async function KelasPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    query?: string;
+    page?: string;
+  }>;
+}) {
   await requirePageAccess("/kelas", ["ADMIN", "KEPALA_SEKOLAH", "TU"]);
 
+  const resolvedParams = await searchParams;
+  const query = resolvedParams?.query || "";
+  const page = Number(resolvedParams?.page) || 1;
+
   // Fetch data
-  const classrooms = await prisma.classroom.findMany({
-    include: {
-      mainTeacher: true,
-      coTeacher: true,
-      _count: {
-        select: { students: true },
-      },
-    },
-    orderBy: [{ schoolYear: "desc" }, { level: "asc" }, { name: "asc" }],
+  const classroomsResponse = await getClassrooms({
+    search: query,
+    page: page,
+    limit: 10,
   });
 
   const teachers = await prisma.teacher.findMany({
@@ -215,11 +224,16 @@ export default async function KelasPage() {
       <div className="grid gap-6 md:grid-cols-[1fr_300px]">
         {/* Tabel Kelas */}
         <Card>
-          <CardHeader>
-            <CardTitle>Daftar Kelas Aktif</CardTitle>
-            <CardDescription>
-              Pantau rasio jumlah siswa terhadap kapasitas maksimal.
-            </CardDescription>
+          <CardHeader className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div>
+              <CardTitle>Daftar Kelas Aktif</CardTitle>
+              <CardDescription>
+                Pantau rasio jumlah siswa terhadap kapasitas maksimal.
+              </CardDescription>
+            </div>
+            <div className="w-full md:w-64">
+              <SearchBar placeholder="Cari kelas..." />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -235,7 +249,7 @@ export default async function KelasPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {classrooms.map((row) => {
+                  {classroomsResponse.rows.map((row) => {
                     const isFull = row._count.students >= row.maxCapacity;
                     const isOver = row._count.students > row.maxCapacity;
                     return (
@@ -350,7 +364,7 @@ export default async function KelasPage() {
                       </TableRow>
                     );
                   })}
-                  {classrooms.length === 0 && (
+                  {classroomsResponse.rows.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                         Belum ada kelas yang dibuat.
@@ -359,6 +373,9 @@ export default async function KelasPage() {
                   )}
                 </TableBody>
               </Table>
+            </div>
+            <div className="mt-4">
+              <Pagination totalPages={classroomsResponse.totalPages || 0} />
             </div>
           </CardContent>
         </Card>

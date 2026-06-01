@@ -36,9 +36,15 @@ Aplikasi ini mencakup seluruh siklus operasional harian sekolah dari Pendaftaran
 
 ### 4. Akademik, Raport & Presensi
 - **Buku Penghubung Digital**: Laporan *Daily Report* harian (Durasi Tidur, Nafsu Makan, Aktivitas) untuk anak PAUD/Daycare yang dibagikan harian ke ponsel orang tua.
-- **E-Raport Semester Interaktif**: Sistem pengisian raport skala penuh dengan fitur **Simpan Draft** dan **Publikasikan**. Menggunakan pemfilteran berdasarkan periode semester berjalan. Penilaian mencakup narasi dari 6 indikator tumbuh kembang standar nasional (Nilai Agama, Kognitif, Motorik, Bahasa, Sosial, Seni).
+- **E-Raport Semester Interaktif (Skalabel)**: Sistem pengisian raport berorientasi pada **Tahun Ajaran & Semester** dengan fitur **Simpan Draft** dan **Publikasikan**. Menggunakan pemfilteran berdasarkan periode semester berjalan dan menyimpan riwayat historis (termasuk kelas asal saat lulus). Tampilan form penuh (Full Page Form) terdedikasi untuk ruang ketik narasi yang lebih lega.
 - **Cetak Raport PDF Otomatis**: Generate dokumen raport murni menggunakan CSS Print (*A4 ready*). Dokumen bersih dari elemen UI dashboard dan langsung siap dicetak serta ditandatangani.
 - **Presensi Harian & Logbook Guru**: Modul kehadiran guru dan unggahan Rencana Pelaksanaan Pembelajaran (RPPH/RPPM) per kelas.
+- **Kenaikan Kelas & Mutasi Terintegrasi**: Fitur perpindahan siswa massal antar kelas (Promosi/Kenaikan Kelas), kelulusan, dan pencabutan siswa dengan sangat presisi dari satu UI yang sama.
+
+### 5. Pengumuman & Komunikasi Profesional
+- **Pengumuman PWA & Notifikasi**: Menerbitkan pengumuman yang mendukung **Batas Waktu Kedaluwarsa (Expiry)**. Pengumuman otomatis menghilang setelah melewati masa aktif yang ditentukan admin.
+- **Notifikasi WhatsApp Broadcast Profesional**: Pemberitahuan otomatis (diterima, lulus, presensi anak hadir, dan validasi bayar SPP) dengan *template* teks formal dan profesional yang dikirimkan via integrasi Fonnte/WA API.
+- **Sistem Paginasi & Pencarian Skalabel**: Sinkronisasi state *Search Bar* & *Pagination* via URL Query Params (`?page=1&query=John`) untuk tabel data yang sangat besar. Mengoptimalkan beban *database* hingga 10x lipat.
 
 ---
 

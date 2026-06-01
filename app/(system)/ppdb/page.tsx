@@ -56,6 +56,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { requirePageAccess } from "@/lib/auth";
 import { getAdmissions } from "@/lib/data";
+import { SearchBar } from "@/components/data-table/search-bar";
+import { Pagination } from "@/components/data-table/pagination";
 import {
   EllipsisVertical,
   UserPlus,
@@ -97,10 +99,25 @@ function statusIcon(status: string) {
   }
 }
 
-export default async function PpdbPage() {
+export default async function PpdbPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    query?: string;
+    page?: string;
+  }>;
+}) {
   await requirePageAccess("/ppdb", ["ADMIN", "TU"]);
 
-  const admissions = await getAdmissions();
+  const resolvedParams = await searchParams;
+  const query = resolvedParams?.query || "";
+  const page = Number(resolvedParams?.page) || 1;
+
+  const admissions = await getAdmissions({
+    search: query,
+    page: page,
+    limit: 10,
+  });
 
   const pendingCount = admissions.rows.filter(
     (r) => r.status === "PENDING",
@@ -305,7 +322,7 @@ export default async function PpdbPage() {
 
       {/* Table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex items-center gap-2">
             <FileCheck className="h-5 w-5 text-primary" />
             <div>
@@ -314,6 +331,9 @@ export default async function PpdbPage() {
                 Daftar pendaftar terbaru untuk proses validasi admin.
               </CardDescription>
             </div>
+          </div>
+          <div className="w-full md:w-64">
+            <SearchBar placeholder="Cari nama anak..." />
           </div>
         </CardHeader>
         <CardContent>
@@ -561,6 +581,9 @@ export default async function PpdbPage() {
               )}
             </TableBody>
           </Table>
+          <div className="mt-4">
+            <Pagination totalPages={admissions.totalPages || 0} />
+          </div>
         </CardContent>
       </Card>
     </section>

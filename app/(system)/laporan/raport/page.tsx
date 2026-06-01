@@ -35,7 +35,9 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { requirePageAccess, getCurrentUser } from "@/lib/auth";
-import { getReportsSnapshot, getStudents } from "@/lib/data";
+import { getAssessments, getStudents } from "@/lib/data";
+import { SearchBar } from "@/components/data-table/search-bar";
+import { Pagination } from "@/components/data-table/pagination";
 import {
   ClipboardList,
   GraduationCap,
@@ -75,7 +77,14 @@ function indicatorColor(indicator: string) {
   }
 }
 
-export default async function RaportPage() {
+export default async function RaportPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    query?: string;
+    page?: string;
+  }>;
+}) {
   await requirePageAccess("/laporan", [
     "ADMIN",
     "TU",
@@ -86,9 +95,13 @@ export default async function RaportPage() {
   const user = await getCurrentUser();
   const teacherId = user?.role === "GURU" && user.teacherId ? user.teacherId : undefined;
 
+  const resolvedParams = await searchParams;
+  const query = resolvedParams?.query || "";
+  const page = Number(resolvedParams?.page) || 1;
+
   const [data, students] = await Promise.all([
-    getReportsSnapshot(teacherId),
-    getStudents(teacherId),
+    getAssessments({ teacherId, search: query, page: page, limit: 10 }),
+    getStudents({ teacherId, limit: 1000 }),
   ]);
 
   return (
@@ -109,8 +122,8 @@ export default async function RaportPage() {
 
       <div className="grid gap-6">
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
+          <CardHeader className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <GraduationCap className="h-5 w-5 text-warm-purple" />
                 <div>
@@ -250,6 +263,9 @@ export default async function RaportPage() {
                 </DialogContent>
               </Dialog>
             </div>
+            <div className="mt-4 w-full md:w-64">
+              <SearchBar placeholder="Cari raport siswa..." />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -349,6 +365,9 @@ export default async function RaportPage() {
                   )}
                 </TableBody>
               </Table>
+            </div>
+            <div className="mt-4">
+              <Pagination totalPages={data.totalPages || 0} />
             </div>
           </CardContent>
         </Card>
