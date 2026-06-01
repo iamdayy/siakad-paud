@@ -1483,3 +1483,48 @@ export async function deleteParent(formData: FormData) {
   }
 }
 
+// ─── Graduation & Mutation ───────────────────────────────────────────────────
+
+export async function processGraduation(studentIds: string[], outDate: Date) {
+  await requireActionAccess(adminAndTu);
+  if (!studentIds.length) return { success: false, message: "Tidak ada siswa yang dipilih" };
+
+  try {
+    await prisma.student.updateMany({
+      where: { id: { in: studentIds } },
+      data: {
+        status: "GRADUATED",
+        classroomId: null,
+        outDate,
+      },
+    });
+    revalidatePath(`/siswa`);
+    revalidatePath(`/siswa/kelulusan`);
+    return { success: true };
+  } catch (err: any) {
+    console.error("processGraduation failed", err);
+    return { success: false, message: err.message };
+  }
+}
+
+export async function processMutation(studentIds: string[], outDate: Date) {
+  await requireActionAccess(adminAndTu);
+  if (!studentIds.length) return { success: false, message: "Tidak ada siswa yang dipilih" };
+
+  try {
+    await prisma.student.updateMany({
+      where: { id: { in: studentIds } },
+      data: {
+        status: "MUTATED",
+        classroomId: null,
+        outDate,
+      },
+    });
+    revalidatePath(`/siswa`);
+    revalidatePath(`/siswa/kelulusan`);
+    return { success: true };
+  } catch (err: any) {
+    console.error("processMutation failed", err);
+    return { success: false, message: err.message };
+  }
+}

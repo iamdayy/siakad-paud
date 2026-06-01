@@ -56,7 +56,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { requirePageAccess } from "@/lib/auth";
 import { getStudents } from "@/lib/data";
-import { Users, UserPlus, Eye, Edit, MoreHorizontal, Trash } from "lucide-react";
+import { Users, UserPlus, Eye, Edit, MoreHorizontal, Trash, GraduationCap } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -92,6 +92,12 @@ export default async function SiswaPage() {
           </div>
           <div className="flex items-center gap-2">
             <ExcelActions />
+            <Button variant="outline" asChild className="gap-2">
+              <Link href="/siswa/kelulusan">
+                <GraduationCap className="h-4 w-4" />
+                Kelulusan & Mutasi
+              </Link>
+            </Button>
             <Dialog>
               <DialogTrigger asChild>
                 <Button className="gap-2">

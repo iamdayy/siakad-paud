@@ -45,11 +45,8 @@ enum InvoiceStatus {
 
 enum InvoiceCategory {
   SPP
-  PANGKAL
-  CATERING
-  JEMPUTAN
-  OUTING
-  BUKU
+  UANG_PANGKAL
+  SERAGAM
   LAINNYA
 }
 
@@ -80,6 +77,12 @@ enum TeacherPosition {
   GURU_KELAS
   GURU_PENDAMPING
   STAFF_ADMINISTRASI
+}
+
+enum AnnouncementTarget {
+  ALL
+  TEACHER
+  PARENT
 }
 
 // ─── User ──────────────────────────────────────────────────────────────────────
@@ -141,6 +144,7 @@ model Student {
   specialNeeds          String?
   address               String?
   status                StudentStatus @default(ACTIVE)
+  outDate               DateTime?
 
   parentId    String?
   parent      Parent?     @relation(fields: [parentId], references: [id], onDelete: SetNull)
@@ -381,19 +385,17 @@ model Assessment {
   periodLabel String   // e.g., "Semester 1 2025/2026"
 
   // 6 aspek perkembangan PAUD (kualitatif)
-  agamaMoral       AssessmentIndicator
-  fisikMotorik     AssessmentIndicator
-  kognitif         AssessmentIndicator
-  bahasa           AssessmentIndicator
-  sosialEmosional  AssessmentIndicator
-  seni             AssessmentIndicator
-
-  // Narasi deskriptif per aspek (untuk raport narasi)
+  agamaMoral            AssessmentIndicator?
   narasiAgamaMoral      String?
+  fisikMotorik          AssessmentIndicator?
   narasiFisikMotorik    String?
+  kognitif              AssessmentIndicator?
   narasiKognitif        String?
+  bahasa                AssessmentIndicator?
   narasiBahasa          String?
+  sosialEmosional       AssessmentIndicator?
   narasiSosialEmosional String?
+  seni                  AssessmentIndicator?
   narasiSeni            String?
 
   // Catatan umum & rekomendasi guru
@@ -407,6 +409,17 @@ model Assessment {
 
   @@unique([studentId, periodLabel])
   @@index([studentId, periodLabel])
+}
+
+// ─── Announcement ──────────────────────────────────────────────────────────────
+
+model Announcement {
+  id         String             @id @default(cuid())
+  title      String
+  content    String
+  targetRole AnnouncementTarget @default(ALL)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
 }
 
 // ─── System Settings (Key-Value Config) ────────────────────────────────────────

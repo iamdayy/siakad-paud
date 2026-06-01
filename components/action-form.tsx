@@ -7,7 +7,7 @@ export function ActionForm({
   action,
   children,
   ...props
-}: React.FormHTMLAttributes<HTMLFormElement> & {
+}: Omit<React.FormHTMLAttributes<HTMLFormElement>, "action"> & {
   action: (formData: FormData) => Promise<any>;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
