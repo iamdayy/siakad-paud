@@ -36,7 +36,6 @@ import {
   Sparkles,
 } from "lucide-react";
 
-export const dynamic = "force-dynamic";
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("id-ID", {
