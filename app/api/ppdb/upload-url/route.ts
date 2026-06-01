@@ -6,19 +6,18 @@ const accessKeyId = process.env.R2_ACCESS_KEY_ID;
 const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
 const accountId = process.env.R2_ACCOUNT_ID;
 const bucket = process.env.R2_BUCKET;
-const endpoint =
-  process.env.R2_ENDPOINT ||
-  (accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined);
+const endpoint = process.env.R2_ENDPOINT;
+const s3ApiEndpoint = accountId ? `https://${accountId}.r2.cloudflarestorage.com` : endpoint;
 
 function makeClient() {
-  if (!accessKeyId || !secretAccessKey || !bucket || !endpoint) {
+  if (!accessKeyId || !secretAccessKey || !bucket || !s3ApiEndpoint) {
     throw new Error("R2 credentials or bucket/endpoint not configured");
   }
   return new S3Client({
     region: "auto",
-    endpoint,
+    endpoint: s3ApiEndpoint,
     credentials: { accessKeyId, secretAccessKey },
-    forcePathStyle: false,
+    forcePathStyle: true,
   });
 }
 
@@ -44,8 +43,16 @@ export async function POST(req: Request) {
         ContentType: f.type || "application/octet-stream",
       });
       const signedUrl = await getSignedUrl(client, cmd, { expiresIn: 60 * 10 });
-      const publicUrl =
-        endpoint && bucket ? `${endpoint}/${bucket}/${key}` : undefined;
+      // If a custom domain is set in R2_PUBLIC_URL or R2_ENDPOINT, use it. Usually custom domains don't need the bucket path.
+      const publicBase = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || endpoint;
+      let publicUrl: string | undefined;
+      
+      if (publicBase) {
+        // Assume custom domain maps directly to bucket root
+        publicUrl = `${publicBase.replace(/\/$/, '')}/${key}`;
+      } else if (s3ApiEndpoint && bucket) {
+        publicUrl = `${s3ApiEndpoint}/${bucket}/${key}`;
+      }
       urls.push({ url: signedUrl, key, publicUrl });
     }
 

@@ -17,18 +17,17 @@ const accessKeyId = process.env.R2_ACCESS_KEY_ID;
 const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
 const accountId = process.env.R2_ACCOUNT_ID;
 const bucketEnv = process.env.R2_BUCKET;
-const endpointEnv =
-  process.env.R2_ENDPOINT ||
-  (accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined);
+const endpointEnv = process.env.R2_ENDPOINT;
+const s3ApiEndpoint = accountId ? `https://${accountId}.r2.cloudflarestorage.com` : endpointEnv;
 
 function makeClient() {
-  if (!accessKeyId || !secretAccessKey || !bucketEnv || !endpointEnv)
+  if (!accessKeyId || !secretAccessKey || !bucketEnv || !s3ApiEndpoint)
     return null;
   return new S3Client({
     region: "auto",
-    endpoint: endpointEnv,
+    endpoint: s3ApiEndpoint,
     credentials: { accessKeyId, secretAccessKey },
-    forcePathStyle: false,
+    forcePathStyle: true,
   });
 }
 
