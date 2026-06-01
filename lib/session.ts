@@ -32,6 +32,7 @@ export const PROTECTED_ROUTE_RULES: Array<{
     { path: "/guru", roles: ["ADMIN", "TU"] },
     { path: "/orangtua", roles: ["ADMIN", "TU", "KEPALA_SEKOLAH"] },
     { path: "/admin/pengaturan", roles: ["ADMIN", "KEPALA_SEKOLAH"] },
+    { path: "/pengumuman", roles: ["ADMIN", "TU", "GURU", "KEPALA_SEKOLAH", "ORANG_TUA"] },
   ];
 
 function getSecretKey() {

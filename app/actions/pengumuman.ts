@@ -14,12 +14,14 @@ export async function createAnnouncement(formData: FormData) {
   const content = String(formData.get("content") ?? "").trim();
   const targetRole = String(formData.get("targetRole") ?? "ALL") as AnnouncementTarget;
   const sendWhatsapp = formData.get("sendWhatsapp") === "on";
+  const expiresAtStr = formData.get("expiresAt") as string | null;
+  const expiresAt = expiresAtStr ? new Date(expiresAtStr) : null;
 
   if (!title || !content) return { success: false, message: "Judul dan isi pengumuman wajib diisi" };
 
   try {
     const announcement = await prisma.announcement.create({
-      data: { title, content, targetRole },
+      data: { title, content, targetRole, expiresAt },
     });
 
     if (sendWhatsapp) {

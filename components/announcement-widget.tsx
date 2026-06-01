@@ -9,6 +9,10 @@ export async function AnnouncementWidget({ targetRole }: { targetRole: Announcem
   const announcements = await prisma.announcement.findMany({
     where: {
       targetRole: { in: [targetRole, "ALL"] },
+      OR: [
+        { expiresAt: null },
+        { expiresAt: { gt: new Date() } }
+      ]
     },
     orderBy: { createdAt: "desc" },
     take: 3,

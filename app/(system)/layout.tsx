@@ -37,7 +37,7 @@ export default async function SystemLayout({
     : [];
 
   const visibleGuruPaths =
-    currentUser?.role === "GURU" || currentUser?.role === "ADMIN" || currentUser?.role === "KEPALA_SEKOLAH"
+    currentUser?.role === "GURU" || currentUser?.role === "KEPALA_SEKOLAH"
       ? ALL_GURU_PATHS
       : [];
 

@@ -86,6 +86,11 @@ export function PengumumanClient({ initialData }: { initialData: Announcement[] 
                   <FieldLabel>Isi Pengumuman</FieldLabel>
                   <Textarea name="content" required rows={4} placeholder="Tulis informasi..." />
                 </Field>
+                <Field>
+                  <FieldLabel>Batas Waktu (Opsional)</FieldLabel>
+                  <Input type="date" name="expiresAt" />
+                  <p className="text-xs text-muted-foreground mt-1">Jika dikosongkan, pengumuman berlaku selamanya.</p>
+                </Field>
                 <div className="flex items-center space-x-2 pt-2">
                   <Checkbox id="sendWhatsapp" name="sendWhatsapp" />
                   <label
@@ -132,6 +137,11 @@ export function PengumumanClient({ initialData }: { initialData: Announcement[] 
                   <TableCell>
                     <div className="font-medium">{item.title}</div>
                     <div className="text-xs text-muted-foreground truncate max-w-sm">{item.content}</div>
+                    {item.expiresAt && (
+                      <div className="text-xs font-medium text-amber-600 mt-1">
+                        Berlaku s/d: {format(new Date(item.expiresAt), "dd MMM yyyy", { locale: localeId })}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>{getTargetBadge(item.targetRole)}</TableCell>
                   <TableCell className="text-right">
