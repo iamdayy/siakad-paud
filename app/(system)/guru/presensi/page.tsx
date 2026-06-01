@@ -1,3 +1,4 @@
+import { ActionForm } from "@/components/action-form";
 import { teacherCheckIn, teacherCheckOut } from "@/app/(system)/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,21 +62,21 @@ export default async function TeacherAttendancePage() {
           <CardContent>
             <div className="flex items-center gap-4">
               {!myAttendance ? (
-                <form action={teacherCheckIn}>
+                <ActionForm action={teacherCheckIn}>
                   <Button type="submit" className="gap-2 bg-green-600 hover:bg-green-700">
                     <LogIn className="h-4 w-4" /> Check In Sekarang
                   </Button>
-                </form>
+                </ActionForm>
               ) : !myAttendance.checkOut ? (
                 <div className="flex items-center gap-4">
                   <div className="text-sm font-medium text-green-700">
                     Telah Check In pada {myAttendance.checkIn?.toLocaleTimeString('id-ID')}
                   </div>
-                  <form action={teacherCheckOut}>
+                  <ActionForm action={teacherCheckOut}>
                     <Button type="submit" variant="destructive" className="gap-2">
                       <LogOut className="h-4 w-4" /> Check Out
                     </Button>
-                  </form>
+                  </ActionForm>
                 </div>
               ) : (
                 <div className="text-sm font-medium text-muted-foreground">

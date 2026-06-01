@@ -1,3 +1,4 @@
+import { ActionForm } from "@/components/action-form";
 import {
   createTeacher,
   deleteTeacher,
@@ -94,7 +95,7 @@ export default async function GuruPage() {
                   Isi biodata guru baru ke dalam sistem.
                 </DialogDescription>
               </DialogHeader>
-              <form action={createTeacher} className="mt-2 space-y-4">
+              <ActionForm action={createTeacher} className="mt-2 space-y-4">
                 <FieldGroup>
                   <Field>
                     <FieldLabel htmlFor="name">Nama Lengkap</FieldLabel>
@@ -134,7 +135,7 @@ export default async function GuruPage() {
                 <div className="flex justify-end">
                   <Button type="submit">Simpan Guru</Button>
                 </div>
-              </form>
+              </ActionForm>
             </DialogContent>
           </Dialog>
         </div>
@@ -202,7 +203,7 @@ export default async function GuruPage() {
                                   Ubah informasi guru sesuai kebutuhan.
                                 </DialogDescription>
                               </DialogHeader>
-                              <form action={updateTeacher}>
+                              <ActionForm action={updateTeacher}>
                                 <FieldGroup className="mt-4">
                                   <Field>
                                     <FieldLabel htmlFor={`name-${t.id}`}>
@@ -247,7 +248,7 @@ export default async function GuruPage() {
                                   </Button>
                                   <Button type="submit">Simpan</Button>
                                 </div>
-                              </form>
+                              </ActionForm>
                             </DialogContent>
                           </Dialog>
                         </DropdownMenuItem>
@@ -270,7 +271,7 @@ export default async function GuruPage() {
                                   Tindakan ini tidak dapat dibatalkan.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
-                              <form action={deleteTeacher} className="grid gap-4">
+                              <ActionForm action={deleteTeacher} className="grid gap-4">
                                 <input
                                   type="hidden"
                                   name="teacherId"
@@ -288,7 +289,7 @@ export default async function GuruPage() {
                                     </Button>
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
-                              </form>
+                              </ActionForm>
                             </AlertDialogContent>
                           </AlertDialog>
                         </DropdownMenuItem>

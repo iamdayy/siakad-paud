@@ -32,7 +32,9 @@
     "midtrans-client": "^1.4.3",
     "next": "16.2.6",
     "next-themes": "^0.4.6",
+    "nextjs-toploader": "^3.9.17",
     "nodemailer": "^6.9.4",
+    "pdfkit": "^0.18.0",
     "radix-ui": "^1.4.3",
     "react": "19.2.4",
     "react-day-picker": "^10.0.1",
@@ -43,6 +45,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
     "vaul": "^1.1.2",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -53,6 +56,7 @@
     "@types/midtrans-client": "^1.4.0",
     "@types/node": "^20",
     "@types/nodemailer": "^6.4.5",
+    "@types/pdfkit": "^0.17.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

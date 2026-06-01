@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
+import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -43,7 +45,9 @@ export default function RootLayout({
     <html lang="id" className={`h-full antialiased ${jakarta.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className="flex min-h-full flex-col bg-background text-foreground font-sans">
         <ThemeProvider defaultTheme="system">
+          <NextTopLoader color="#F59E0B" showSpinner={false} />
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

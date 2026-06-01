@@ -1,3 +1,4 @@
+import { ActionForm } from "@/components/action-form";
 import {
   assignStudentsToClass,
   createClassroom,
@@ -121,7 +122,7 @@ export default async function KelasPage() {
                   Atur kapasitas dan tugaskan guru.
                 </DialogDescription>
               </DialogHeader>
-              <form action={createClassroom} className="mt-4 space-y-4">
+              <ActionForm action={createClassroom} className="mt-4 space-y-4">
                 <FieldGroup>
                   <Field>
                     <FieldLabel htmlFor="name">Nama Kelas</FieldLabel>
@@ -204,7 +205,7 @@ export default async function KelasPage() {
                 <div className="flex justify-end pt-2">
                   <Button type="submit">Simpan Kelas</Button>
                 </div>
-              </form>
+              </ActionForm>
             </DialogContent>
           </Dialog>
         </div>
@@ -284,7 +285,7 @@ export default async function KelasPage() {
                                         Kapasitas tersisa: {Math.max(0, row.maxCapacity - row._count.students)}.
                                       </DialogDescription>
                                     </DialogHeader>
-                                    <form action={assignStudentsToClass} className="mt-4 space-y-4">
+                                    <ActionForm action={assignStudentsToClass} className="mt-4 space-y-4">
                                       <input type="hidden" name="classroomId" value={row.id} />
 
                                       {floatingStudents.length === 0 ? (
@@ -302,7 +303,7 @@ export default async function KelasPage() {
                                           Tambahkan Siswa
                                         </Button>
                                       </div>
-                                    </form>
+                                    </ActionForm>
                                   </DialogContent>
                                 </Dialog>
                               </DropdownMenuItem>
@@ -322,7 +323,7 @@ export default async function KelasPage() {
                                         Semua siswa di kelas ini akan kehilangan penugasannya dan kembali berstatus Floating.
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
-                                    <form action={deleteClassroom}>
+                                    <ActionForm action={deleteClassroom}>
                                       <input type="hidden" name="classroomId" value={row.id} />
                                       <AlertDialogFooter>
                                         <AlertDialogCancel>Batal</AlertDialogCancel>
@@ -332,7 +333,7 @@ export default async function KelasPage() {
                                           </Button>
                                         </AlertDialogAction>
                                       </AlertDialogFooter>
-                                    </form>
+                                    </ActionForm>
                                   </AlertDialogContent>
                                 </AlertDialog>
                               </DropdownMenuItem>

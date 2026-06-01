@@ -738,6 +738,74 @@ export async function createInvoice(formData: FormData) {
   }
 }
 
+export async function createBulkInvoice(formData: FormData) {
+  await requireActionAccess(adminAndTu);
+
+  const targetClassId = String(formData.get("targetClassId") ?? "").trim();
+  const category = String(formData.get("category") ?? "SPP") as InvoiceCategory;
+  const title = String(formData.get("title") ?? "").trim();
+  const periodMonth = Number(formData.get("periodMonth") ?? 0);
+  const periodYear = Number(formData.get("periodYear") ?? 0);
+  const amount = Number(formData.get("amount") ?? 0);
+  const dueDate = safeDate(formData.get("dueDate"));
+
+  if (
+    !targetClassId ||
+    !periodMonth ||
+    !periodYear ||
+    !Number.isFinite(amount) ||
+    amount <= 0 ||
+    !dueDate
+  ) {
+    return;
+  }
+
+  try {
+    let studentIds: string[] = [];
+
+    if (targetClassId === "ALL") {
+      const activeStudents = await prisma.student.findMany({
+        where: { status: "ACTIVE" },
+        select: { id: true },
+      });
+      studentIds = activeStudents.map(s => s.id);
+    } else {
+      const classStudents = await prisma.student.findMany({
+        where: { status: "ACTIVE", classroomId: targetClassId },
+        select: { id: true },
+      });
+      studentIds = classStudents.map(s => s.id);
+    }
+
+    if (studentIds.length === 0) {
+      return;
+    }
+
+    const payload = studentIds.map(studentId => ({
+      code: `INV-${periodYear}${String(periodMonth).padStart(2, "0")}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+      studentId,
+      category,
+      title: title || undefined,
+      periodMonth,
+      periodYear,
+      amount: Math.round(amount),
+      dueDate,
+    }));
+
+    await prisma.invoice.createMany({
+      data: payload,
+    });
+
+    revalidatePath("/keuangan");
+    revalidatePath("/dashboard");
+
+    return;
+  } catch (error: any) {
+    console.error("createBulkInvoice failed", error);
+    return;
+  }
+}
+
 export async function recordPayment(formData: FormData) {
   await requireActionAccess(adminAndTu);
 

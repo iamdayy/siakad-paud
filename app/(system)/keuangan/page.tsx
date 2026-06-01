@@ -1,11 +1,14 @@
+import { ActionForm } from "@/components/action-form";
 import {
   createExpense,
   createInvoice,
+  createBulkInvoice,
   deleteExpense,
   deleteInvoice,
   recordPayment,
   updateInvoice,
 } from "@/app/(system)/actions";
+import { SendEmailButton } from "./send-email-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,8 +46,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { requirePageAccess } from "@/lib/auth";
-import { getExpenses, getFinanceSnapshot, getStudents } from "@/lib/data";
-import { Banknote, CreditCard, DollarSign, Wallet } from "lucide-react";
+import { getExpenses, getFinanceSnapshot, getStudents, getClassrooms } from "@/lib/data";
+import { Banknote, CreditCard, DollarSign, Wallet, Users } from "lucide-react";
+import { CronTriggerButton } from "./cron-trigger-button";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +75,7 @@ export default async function KeuanganPage() {
 
   const finance = await getFinanceSnapshot();
   const students = await getStudents();
+  const classrooms = await getClassrooms();
   const expenses = await getExpenses();
 
   const balance = finance.revenue - finance.totalExpenses;
@@ -154,18 +159,116 @@ export default async function KeuanganPage() {
                         Buat tagihan bulanan untuk siswa aktif.
                       </p>
                     </div>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button>Buat Invoice Baru</Button>
-                      </DialogTrigger>
-                      <DialogContent>
+                    
+                    <div className="flex items-center gap-2">
+                      <CronTriggerButton />
+                      
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="gap-2">
+                            <Users className="w-4 h-4" /> Tagihan Massal
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Buat Tagihan Massal</DialogTitle>
+                            <DialogDescription>
+                              Buat tagihan untuk satu kelas atau seluruh siswa sekaligus.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <ActionForm action={createBulkInvoice}>
+                            <FieldGroup>
+                              <Field>
+                                <FieldLabel htmlFor="targetClassId">Target</FieldLabel>
+                                <Select name="targetClassId" required defaultValue="ALL">
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Pilih target" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="ALL">Semua Siswa Aktif</SelectItem>
+                                    {classrooms.rows.map((c: any) => (
+                                      <SelectItem key={c.id} value={c.id}>
+                                        Kelas {c.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </Field>
+                              <Field>
+                                <FieldLabel htmlFor="category">Kategori</FieldLabel>
+                                <Select name="category" required defaultValue="SPP">
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Pilih kategori" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="SPP">SPP</SelectItem>
+                                    <SelectItem value="PANGKAL">Uang Pangkal</SelectItem>
+                                    <SelectItem value="CATERING">Catering</SelectItem>
+                                    <SelectItem value="JEMPUTAN">Jemputan</SelectItem>
+                                    <SelectItem value="OUTING">Outing/Kunjungan</SelectItem>
+                                    <SelectItem value="BUKU">Buku/Alat Peraga</SelectItem>
+                                    <SelectItem value="LAINNYA">Lainnya</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </Field>
+                              <Field className="sm:col-span-2">
+                                <FieldLabel htmlFor="title">Keterangan / Judul (Opsional)</FieldLabel>
+                                <Input id="title" name="title" placeholder="Cth: Buku Paket Semester 1" />
+                              </Field>
+                              <Field>
+                                <FieldLabel htmlFor="periodMonth">Bulan</FieldLabel>
+                                <Input
+                                  id="bulk-periodMonth"
+                                  name="periodMonth"
+                                  type="number"
+                                  min={1}
+                                  max={12}
+                                  defaultValue={new Date().getMonth() + 1}
+                                />
+                              </Field>
+                              <Field>
+                                <FieldLabel htmlFor="periodYear">Tahun</FieldLabel>
+                                <Input
+                                  id="bulk-periodYear"
+                                  name="periodYear"
+                                  type="number"
+                                  min={2000}
+                                  defaultValue={new Date().getFullYear()}
+                                />
+                              </Field>
+                              <Field>
+                                <FieldLabel htmlFor="amount">Nominal</FieldLabel>
+                                <Input id="bulk-amount" name="amount" type="number" min={1} required />
+                              </Field>
+                              <Field>
+                                <FieldLabel htmlFor="dueDate">Tanggal Jatuh Tempo</FieldLabel>
+                                <Input
+                                  id="bulk-dueDate"
+                                  name="dueDate"
+                                  type="date"
+                                  defaultValue={toDateInput(new Date())}
+                                />
+                              </Field>
+                            </FieldGroup>
+                            <div className="sm:col-span-2 flex justify-end space-y-2 mt-4">
+                              <Button type="submit">Generate Tagihan</Button>
+                            </div>
+                          </ActionForm>
+                        </DialogContent>
+                      </Dialog>
+
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button>Buat Invoice</Button>
+                        </DialogTrigger>
+                        <DialogContent>
                         <DialogHeader>
                           <DialogTitle>Buat Invoice Baru</DialogTitle>
                           <DialogDescription>
                             Isi form berikut untuk membuat invoice baru.
                           </DialogDescription>
                         </DialogHeader>
-                        <form action={createInvoice}>
+                        <ActionForm action={createInvoice}>
                           <FieldGroup>
                             <Field>
                               <FieldLabel htmlFor="studentId">Siswa</FieldLabel>
@@ -245,9 +348,10 @@ export default async function KeuanganPage() {
                           <div className="sm:col-span-2 flex justify-end space-y-2 mt-4">
                             <Button type="submit">Simpan Invoice</Button>
                           </div>
-                        </form>
+                        </ActionForm>
                       </DialogContent>
                     </Dialog>
+                    </div>
                   </div>
                 </div>
 
@@ -270,7 +374,7 @@ export default async function KeuanganPage() {
                             Isi form berikut untuk merekam pembayaran baru.
                           </DialogDescription>
                         </DialogHeader>
-                        <form action={recordPayment}>
+                        <ActionForm action={recordPayment}>
                           <FieldGroup>
                             <Field>
                               <FieldLabel htmlFor="invoiceId">Invoice</FieldLabel>
@@ -334,7 +438,7 @@ export default async function KeuanganPage() {
                           <div className="flex justify-end mt-4 gap-2">
                             <Button type="submit">Simpan Pembayaran</Button>
                           </div>
-                        </form>
+                        </ActionForm>
                       </DialogContent>
                     </Dialog>
                   </div>
@@ -376,6 +480,7 @@ export default async function KeuanganPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-2">
+                            <SendEmailButton invoiceId={row.id} />
                             <Dialog>
                               <DialogTrigger asChild>
                                 <Button size="sm" variant="outline">
@@ -386,7 +491,7 @@ export default async function KeuanganPage() {
                                 <DialogHeader>
                                   <DialogTitle>Edit Invoice</DialogTitle>
                                 </DialogHeader>
-                                <form action={updateInvoice}>
+                                <ActionForm action={updateInvoice}>
                                   <input type="hidden" name="invoiceId" value={row.id} />
                                   <FieldGroup>
                                     <Field>
@@ -418,16 +523,16 @@ export default async function KeuanganPage() {
                                   <div className="flex justify-end gap-2 mt-4">
                                     <Button type="submit">Simpan</Button>
                                   </div>
-                                </form>
+                                </ActionForm>
                               </DialogContent>
                             </Dialog>
 
-                            <form action={deleteInvoice}>
+                            <ActionForm action={deleteInvoice}>
                               <input type="hidden" name="invoiceId" value={row.id} />
                               <Button size="sm" variant="destructive" type="submit">
                                 Hapus
                               </Button>
-                            </form>
+                            </ActionForm>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -467,7 +572,7 @@ export default async function KeuanganPage() {
                       Masukkan rincian pengeluaran kas sekolah.
                     </DialogDescription>
                   </DialogHeader>
-                  <form action={createExpense}>
+                  <ActionForm action={createExpense}>
                     <FieldGroup>
                       <Field>
                         <FieldLabel htmlFor="category">Kategori Biaya</FieldLabel>
@@ -526,7 +631,7 @@ export default async function KeuanganPage() {
                     <div className="flex justify-end pt-2 mt-4">
                       <Button type="submit" variant="destructive" className="bg-red-600">Simpan Pengeluaran</Button>
                     </div>
-                  </form>
+                  </ActionForm>
                 </DialogContent>
               </Dialog>
             </CardHeader>
@@ -557,12 +662,12 @@ export default async function KeuanganPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-end">
-                          <form action={deleteExpense}>
+                          <ActionForm action={deleteExpense}>
                             <input type="hidden" name="expenseId" value={row.id} />
                             <Button size="sm" variant="outline" type="submit" className="text-red-500 hover:text-red-700">
                               Batal/Hapus
                             </Button>
-                          </form>
+                          </ActionForm>
                         </div>
                       </TableCell>
                     </TableRow>

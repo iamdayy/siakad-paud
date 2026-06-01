@@ -1,3 +1,4 @@
+import { ActionForm } from "@/components/action-form";
 import { deleteLessonPlan, submitLessonPlan } from "@/app/(system)/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -80,7 +81,7 @@ export default async function LogbookPage() {
                   dokumen atau menulis konten secara langsung.
                 </DialogDescription>
               </DialogHeader>
-              <form action={submitLessonPlan} className="mt-4 space-y-4">
+              <ActionForm action={submitLessonPlan} className="mt-4 space-y-4">
                 <FieldGroup>
                   <Field>
                     <FieldLabel htmlFor="teacherId">Guru Pendidik</FieldLabel>
@@ -151,7 +152,7 @@ export default async function LogbookPage() {
                 <div className="flex justify-end pt-2">
                   <Button type="submit">Simpan Logbook</Button>
                 </div>
-              </form>
+              </ActionForm>
             </DialogContent>
           </Dialog>
         </div>
@@ -206,12 +207,12 @@ export default async function LogbookPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end">
-                        <form action={deleteLessonPlan}>
+                        <ActionForm action={deleteLessonPlan}>
                           <input type="hidden" name="lessonPlanId" value={row.id} />
                           <Button size="sm" variant="destructive" type="submit">
                             Hapus
                           </Button>
-                        </form>
+                        </ActionForm>
                       </div>
                     </TableCell>
                   </TableRow>

@@ -1,3 +1,4 @@
+import { ActionForm } from "@/components/action-form";
 "use client";
 
 import { useState } from "react";
@@ -45,7 +46,7 @@ export function EditParentForm({ parent, asMenuItem }: { parent: any, asMenuItem
           <DialogTitle>Edit Data Orang Tua</DialogTitle>
           <DialogDescription>Ubah detail kontak dan alamat.</DialogDescription>
         </DialogHeader>
-        <form action={actionWrapper} className="space-y-4">
+        <ActionForm action={actionWrapper} className="space-y-4">
           <input type="hidden" name="id" value={parent.id} />
           {error && <div className="text-red-500 text-sm">{error}</div>}
           
@@ -75,7 +76,7 @@ export function EditParentForm({ parent, asMenuItem }: { parent: any, asMenuItem
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button>
             <Button type="submit" disabled={loading}>{loading ? "Menyimpan..." : "Simpan"}</Button>
           </div>
-        </form>
+        </ActionForm>
       </DialogContent>
     </Dialog>
   );

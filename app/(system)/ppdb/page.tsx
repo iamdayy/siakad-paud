@@ -1,3 +1,4 @@
+import { ActionForm } from "@/components/action-form";
 import {
   approveAdmission,
   createAdmission,
@@ -166,7 +167,7 @@ export default async function PpdbPage() {
                   Isi data calon siswa dan orang tua secara lengkap.
                 </DialogDescription>
               </DialogHeader>
-              <form action={createAdmission} className="mt-4 space-y-6">
+              <ActionForm action={createAdmission} className="mt-4 space-y-6">
                 {/* Step 1: Data Anak */}
                 <div>
                   <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">
@@ -296,7 +297,7 @@ export default async function PpdbPage() {
                     Simpan Pendaftaran
                   </Button>
                 </div>
-              </form>
+              </ActionForm>
             </DialogContent>
           </Dialog>
         </Card>
@@ -481,7 +482,7 @@ export default async function PpdbPage() {
                                       WhatsApp ke {row.whatsapp}.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
-                                  <form action={approveAdmission}>
+                                  <ActionForm action={approveAdmission}>
                                     <input
                                       type="hidden"
                                       name="admissionId"
@@ -492,7 +493,7 @@ export default async function PpdbPage() {
                                         Ya, setujui
                                       </Button>
                                     </div>
-                                  </form>
+                                  </ActionForm>
                                 </AlertDialogContent>
                               </AlertDialog>
                             </DropdownMenuItem>
@@ -515,7 +516,7 @@ export default async function PpdbPage() {
                                       {row.whatsapp}.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
-                                  <form
+                                  <ActionForm
                                     action={rejectAdmission}
                                     className="flex flex-col gap-4 mt-4"
                                   >
@@ -537,7 +538,7 @@ export default async function PpdbPage() {
                                         Ya, tolak
                                       </Button>
                                     </div>
-                                  </form>
+                                  </ActionForm>
                                 </AlertDialogContent>
                               </AlertDialog>
                             </DropdownMenuItem>

@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import type Mail from "nodemailer/lib/mailer";
 
 const host = process.env.SMTP_HOST;
 const port = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined;
@@ -8,13 +9,19 @@ const from =
   process.env.FROM_EMAIL ||
   `no-reply@${process.env.NEXT_PUBLIC_VERCEL_URL || "example.com"}`;
 
-export async function sendConfirmationEmail(
-  to: string,
-  subject: string,
-  text: string,
-) {
+export async function sendEmail({
+  to,
+  subject,
+  text,
+  attachments,
+}: {
+  to: string;
+  subject: string;
+  text: string;
+  attachments?: Mail.Attachment[];
+}) {
   if (!host || !port || !user || !pass) {
-    console.warn("SMTP config missing; skipping sendConfirmationEmail", {
+    console.warn("SMTP config missing; skipping sendEmail", {
       host,
       port,
       user,
@@ -37,5 +44,15 @@ export async function sendConfirmationEmail(
     to,
     subject,
     text,
+    attachments,
   });
+}
+
+// Backward compatibility for existing code
+export async function sendConfirmationEmail(
+  to: string,
+  subject: string,
+  text: string,
+) {
+  return sendEmail({ to, subject, text });
 }

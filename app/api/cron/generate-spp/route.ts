@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { generateInvoicePDF } from "@/lib/pdf";
+import { sendEmail } from "@/lib/email";
 
 const CRON_SECRET = process.env.CRON_SECRET ?? "siakad-cron-secret";
 
@@ -50,9 +52,11 @@ export async function POST(request: NextRequest) {
       where: {
         status: { in: ["UNPAID", "PARTIAL"] },
         dueDate: { lt: now },
-        category: "SPP",
       },
-      include: { payments: true },
+      include: { 
+        payments: true,
+        student: { include: { parent: true, classroom: true } }
+      },
     });
 
     let lateFeesApplied = 0;
@@ -67,12 +71,32 @@ export async function POST(request: NextRequest) {
       const calculatedFine = Math.min(daysLate * LATE_FEE_PER_DAY, MAX_LATE_FEE);
 
       // Only update if the fine has increased
-      if (calculatedFine > invoice.fineAmount) {
+      if (calculatedFine > invoice.fineAmount && invoice.category === "SPP") {
         await prisma.invoice.update({
           where: { id: invoice.id },
           data: { fineAmount: calculatedFine },
         });
         lateFeesApplied++;
+      }
+
+      // Send Reminder Email if parent has email
+      if (invoice.student.parent?.email) {
+        try {
+          const pdfBuffer = await generateInvoicePDF(invoice);
+          await sendEmail({
+            to: invoice.student.parent.email,
+            subject: `PENGINGAT: Tagihan ${invoice.category} Belum Lunas`,
+            text: `Yth. Orang Tua dari ${invoice.student.fullName},\n\nKami menginformasikan bahwa terdapat tagihan ${invoice.category} (Kode: ${invoice.code}) yang telah melewati jatuh tempo pada ${invoice.dueDate.toLocaleDateString("id-ID")}.\n\nTotal tunggakan dan denda (jika ada) dapat dilihat pada invoice terlampir. Mohon segera melakukan pembayaran.\n\nAbaikan pesan ini jika Anda sudah melakukan pembayaran dalam 24 jam terakhir.`,
+            attachments: [
+              {
+                filename: `Reminder_${invoice.code}.pdf`,
+                content: pdfBuffer,
+              }
+            ]
+          });
+        } catch (emailErr) {
+          console.error(`Failed to send reminder email to ${invoice.student.parent.email}`, emailErr);
+        }
       }
     }
 
@@ -80,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     const activeStudents = await prisma.student.findMany({
       where: { status: "ACTIVE" },
-      select: { id: true, fullName: true },
+      select: { id: true, fullName: true, parent: { select: { email: true } } },
     });
 
     let invoicesCreated = 0;
@@ -112,7 +136,7 @@ export async function POST(request: NextRequest) {
         dueDate.setMonth(dueDate.getMonth() + 1);
       }
 
-      await prisma.invoice.create({
+      const newInvoice = await prisma.invoice.create({
         data: {
           code,
           studentId: student.id,
@@ -121,7 +145,7 @@ export async function POST(request: NextRequest) {
           periodYear: currentYear,
           amount: DEFAULT_SPP_AMOUNT,
           dueDate,
-        },
+        }
       });
 
       invoicesCreated++;

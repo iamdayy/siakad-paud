@@ -1,5 +1,7 @@
+import { ActionForm } from "@/components/action-form";
 import { createStudent, deleteStudent, updateStudentStatus, updateStudent } from "@/app/(system)/actions";
 import Link from "next/link";
+import { ExcelActions } from "./excel-actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -88,85 +90,88 @@ export default async function SiswaPage() {
               Kelola data siswa aktif, lulus, dan mutasi secara lengkap.
             </p>
           </div>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <UserPlus className="h-4 w-4" />
-                Tambah Siswa
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Tambah Siswa Manual</DialogTitle>
-                <DialogDescription>
-                  Input data siswa baru langsung ke database.
-                </DialogDescription>
-              </DialogHeader>
-              <form action={createStudent} className="mt-4 space-y-4">
-                <FieldGroup>
-                  <Field>
-                    <FieldLabel htmlFor="fullName">Nama Lengkap</FieldLabel>
-                    <Input id="fullName" name="fullName" required />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="nickName">Nama Panggilan</FieldLabel>
-                    <Input id="nickName" name="nickName" placeholder="Nama panggilan anak" />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="birthPlace">Tempat Lahir</FieldLabel>
-                    <Input id="birthPlace" name="birthPlace" />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="birthDate">Tanggal Lahir</FieldLabel>
-                    <Input
-                      type="date"
-                      id="birthDate"
-                      name="birthDate"
-                      required
-                      defaultValue={toDateInput(new Date())}
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="gender">Jenis Kelamin</FieldLabel>
-                    <Select name="gender">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Laki-laki">Laki-laki</SelectItem>
-                        <SelectItem value="Perempuan">Perempuan</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="nik">NIK Anak</FieldLabel>
-                    <Input id="nik" name="nik" />
-                  </Field>
-                  <Field className="sm:col-span-2">
-                    <FieldLabel htmlFor="allergies">Alergi / Kebutuhan Khusus</FieldLabel>
-                    <Textarea
-                      id="allergies"
-                      name="allergies"
-                      rows={2}
-                      placeholder="Riwayat alergi atau kebutuhan khusus"
-                    />
-                  </Field>
-                  <Field className="sm:col-span-2">
-                    <FieldLabel htmlFor="address">Alamat</FieldLabel>
-                    <Textarea
-                      id="address"
-                      name="address"
-                      rows={2}
-                      placeholder="Alamat rumah"
-                    />
-                  </Field>
-                </FieldGroup>
-                <div className="flex justify-end">
-                  <Button type="submit">Simpan Siswa</Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-2">
+            <ExcelActions />
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Tambah Siswa
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Tambah Siswa Manual</DialogTitle>
+                  <DialogDescription>
+                    Input data siswa baru langsung ke database.
+                  </DialogDescription>
+                </DialogHeader>
+                <ActionForm action={createStudent} className="mt-4 space-y-4">
+                  <FieldGroup>
+                    <Field>
+                      <FieldLabel htmlFor="fullName">Nama Lengkap</FieldLabel>
+                      <Input id="fullName" name="fullName" required />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="nickName">Nama Panggilan</FieldLabel>
+                      <Input id="nickName" name="nickName" placeholder="Nama panggilan anak" />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="birthPlace">Tempat Lahir</FieldLabel>
+                      <Input id="birthPlace" name="birthPlace" />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="birthDate">Tanggal Lahir</FieldLabel>
+                      <Input
+                        type="date"
+                        id="birthDate"
+                        name="birthDate"
+                        required
+                        defaultValue={toDateInput(new Date())}
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="gender">Jenis Kelamin</FieldLabel>
+                      <Select name="gender">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Laki-laki">Laki-laki</SelectItem>
+                          <SelectItem value="Perempuan">Perempuan</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="nik">NIK Anak</FieldLabel>
+                      <Input id="nik" name="nik" />
+                    </Field>
+                    <Field className="sm:col-span-2">
+                      <FieldLabel htmlFor="allergies">Alergi / Kebutuhan Khusus</FieldLabel>
+                      <Textarea
+                        id="allergies"
+                        name="allergies"
+                        rows={2}
+                        placeholder="Riwayat alergi atau kebutuhan khusus"
+                      />
+                    </Field>
+                    <Field className="sm:col-span-2">
+                      <FieldLabel htmlFor="address">Alamat</FieldLabel>
+                      <Textarea
+                        id="address"
+                        name="address"
+                        rows={2}
+                        placeholder="Alamat rumah"
+                      />
+                    </Field>
+                  </FieldGroup>
+                  <div className="flex justify-end">
+                    <Button type="submit">Simpan Siswa</Button>
+                  </div>
+                </ActionForm>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </div>
 
@@ -252,7 +257,7 @@ export default async function SiswaPage() {
                                     Ubah status dari {row.fullName}. Jika siswa Lulus atau Mutasi, mereka akan dikeluarkan dari kelas saat ini.
                                   </DialogDescription>
                                 </DialogHeader>
-                                <form action={updateStudentStatus} className="space-y-4">
+                                <ActionForm action={updateStudentStatus} className="space-y-4">
                                   <input type="hidden" name="studentId" value={row.id} />
                                   <FieldGroup>
                                     <Field>
@@ -273,7 +278,7 @@ export default async function SiswaPage() {
                                   <div className="flex justify-end pt-2">
                                     <Button type="submit">Simpan Perubahan</Button>
                                   </div>
-                                </form>
+                                </ActionForm>
                               </DialogContent>
                             </Dialog>
                           </DropdownMenuItem>
@@ -297,7 +302,7 @@ export default async function SiswaPage() {
                                     juga akan terhapus.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
-                                <form action={deleteStudent} className="grid gap-4">
+                                <ActionForm action={deleteStudent} className="grid gap-4">
                                   <input
                                     type="hidden"
                                     name="studentId"
@@ -315,7 +320,7 @@ export default async function SiswaPage() {
                                       </Button>
                                     </AlertDialogAction>
                                   </AlertDialogFooter>
-                                </form>
+                                </ActionForm>
                               </AlertDialogContent>
                             </AlertDialog>
                           </DropdownMenuItem>

@@ -1,3 +1,4 @@
+import { ActionForm } from "@/components/action-form";
 import { recordAttendance } from "@/app/(system)/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -153,7 +154,7 @@ export default async function PresensiPage() {
                   orang tua jika siswa hadir.
                 </DialogDescription>
               </DialogHeader>
-              <form action={recordAttendance} className="mt-2 grid gap-4">
+              <ActionForm action={recordAttendance} className="mt-2 grid gap-4">
                 <FieldGroup>
                   <Field>
                     <FieldLabel htmlFor="studentId">Siswa</FieldLabel>
@@ -208,7 +209,7 @@ export default async function PresensiPage() {
                 <div className="flex justify-end mt-4">
                   <Button type="submit">Simpan Presensi</Button>
                 </div>
-              </form>
+              </ActionForm>
             </DialogContent>
           </Dialog>
         </Card>

@@ -1,3 +1,4 @@
+import { ActionForm } from "@/components/action-form";
 import {
   createParent,
   deleteParent,
@@ -91,7 +92,7 @@ export default async function OrangTuaPage() {
                   Masukkan kontak dan biodata orang tua baru.
                 </DialogDescription>
               </DialogHeader>
-              <form action={handleCreate} className="space-y-4">
+              <ActionForm action={handleCreate} className="space-y-4">
                 <FieldGroup>
                   <Field>
                     <FieldLabel htmlFor="fatherName">Nama Ayah</FieldLabel>
@@ -116,7 +117,7 @@ export default async function OrangTuaPage() {
                   </Button>
                   <Button type="submit">Simpan</Button>
                 </div>
-              </form>
+              </ActionForm>
             </DialogContent>
           </Dialog>
         </div>
@@ -193,7 +194,7 @@ export default async function OrangTuaPage() {
                                     Apakah Anda yakin ingin menghapus data orang tua ini? Ini juga dapat melepaskan relasi anak dari orang tua.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
-                                <form action={deleteParent} className="space-y-4">
+                                <ActionForm action={deleteParent} className="space-y-4">
                                   <input type="hidden" name="id" value={g.id} />
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Batal</AlertDialogCancel>
@@ -203,7 +204,7 @@ export default async function OrangTuaPage() {
                                       </Button>
                                     </AlertDialogAction>
                                   </AlertDialogFooter>
-                                </form>
+                                </ActionForm>
                               </AlertDialogContent>
                             </AlertDialog>
                           </DropdownMenuItem>

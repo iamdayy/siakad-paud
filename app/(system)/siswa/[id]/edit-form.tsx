@@ -1,3 +1,4 @@
+import { ActionForm } from "@/components/action-form";
 "use client";
 
 import { useState } from "react";
@@ -39,7 +40,7 @@ export function EditStudentForm({ student }: { student: any }) {
           <DialogTitle>Edit Data Siswa</DialogTitle>
           <DialogDescription>Ubah biodata lengkap siswa.</DialogDescription>
         </DialogHeader>
-        <form action={actionWrapper} className="space-y-4">
+        <ActionForm action={actionWrapper} className="space-y-4">
           <input type="hidden" name="id" value={student.id} />
           {error && <div className="text-red-500 text-sm">{error}</div>}
           
@@ -83,7 +84,7 @@ export function EditStudentForm({ student }: { student: any }) {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button>
             <Button type="submit" disabled={loading}>{loading ? "Menyimpan..." : "Simpan"}</Button>
           </div>
-        </form>
+        </ActionForm>
       </DialogContent>
     </Dialog>
   );
