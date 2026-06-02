@@ -16,10 +16,11 @@ export const metadata = {
 export default async function PpdbPublicLandingPage({
   searchParams,
 }: {
-  searchParams: { closed?: string };
+  searchParams: Promise<{ closed?: string }>;
 }) {
   const config = await getPpdbConfig();
-  const showClosedAlert = searchParams.closed === "1";
+  const resolvedSearchParams = await searchParams;
+  const showClosedAlert = resolvedSearchParams.closed === "1";
 
   // Format dates
   const startDateStr = new Date(config.startDate).toLocaleDateString("id-ID", {
